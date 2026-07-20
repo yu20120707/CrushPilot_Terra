@@ -1,11 +1,14 @@
 const api = ["localhost", "127.0.0.1"].includes(location.hostname) && location.port === "5173" ? "http://127.0.0.1:8000" : "";
 let threadId = crypto.randomUUID();
+let deviceId = localStorage.getItem("crushpilot-device-id");
+if (!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem("crushpilot-device-id", deviceId); }
 const messages = document.querySelector("#messages");
 const form = document.querySelector("#composer");
 const input = document.querySelector("#message");
 const status = document.querySelector("#status");
 const threads = document.querySelector("#threads");
 const actions = document.querySelector("#actions");
+const apiHeaders = { "X-Device-Id": deviceId };
 
 function addElement(parent, tag, text, className = "") {
   const element = document.createElement(tag);
@@ -50,7 +53,7 @@ async function send(text) {
   const draft = message("assistant", "正在思考…");
   status.textContent = "生成中";
   try {
-    const response = await fetch(`${api}/api/v1/chat`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ thread_id: threadId, message: text }) });
+    const response = await fetch(`${api}/api/v1/chat`, { method: "POST", headers: { ...apiHeaders, "Content-Type": "application/json" }, body: JSON.stringify({ thread_id: threadId, message: text }) });
     if (!response.ok) throw Error(`服务返回 ${response.status}`);
     const reader = response.body.getReader();
     const decoder = new TextDecoder();
@@ -81,7 +84,7 @@ async function send(text) {
 
 async function loadThreads() {
   try {
-    const list = await fetch(`${api}/api/v1/threads`).then(response => response.json());
+    const list = await fetch(`${api}/api/v1/threads`, { headers: apiHeaders }).then(response => response.json());
     threads.replaceChildren();
     for (const item of list) {
       const row = document.createElement("div");
@@ -91,7 +94,7 @@ async function loadThreads() {
       const remove = addElement(row, "button", "×", "delete-thread");
       remove.setAttribute("aria-label", `删除会话 ${item.title}`);
       remove.addEventListener("click", async () => {
-        await fetch(`${api}/api/v1/threads/${encodeURIComponent(item.thread_id)}`, { method: "DELETE" });
+        await fetch(`${api}/api/v1/threads/${encodeURIComponent(item.thread_id)}`, { method: "DELETE", headers: apiHeaders });
         if (threadId === item.thread_id) { threadId = crypto.randomUUID(); messages.replaceChildren(); actions.hidden = true; }
         loadThreads();
       });
@@ -102,7 +105,7 @@ async function loadThreads() {
 
 async function loadThread(nextThreadId) {
   try {
-    const response = await fetch(`${api}/api/v1/threads/${encodeURIComponent(nextThreadId)}`);
+    const response = await fetch(`${api}/api/v1/threads/${encodeURIComponent(nextThreadId)}`, { headers: apiHeaders });
     if (!response.ok) throw new Error("无法读取会话");
     const history = await response.json();
     threadId = nextThreadId;

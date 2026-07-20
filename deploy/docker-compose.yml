@@ -18,7 +18,8 @@ services:
       context: ..
       dockerfile: backend/Dockerfile
     environment:
-      DATABASE_URL: postgresql://crushpilot:${POSTGRES_PASSWORD}@postgres:5432/crushpilot?sslmode=disable
+      DATABASE_URL: postgresql://crushpilot@postgres:5432/crushpilot?sslmode=disable
+      PGPASSWORD: ${POSTGRES_PASSWORD}
       DEMO_MODE: "false"
       MODEL_BASE_URL: ${MODEL_BASE_URL}
       MODEL_API_KEY: ${MODEL_API_KEY}

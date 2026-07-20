@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: crushpilot
+      POSTGRES_USER: crushpilot
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U crushpilot -d crushpilot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    environment:
+      DATABASE_URL: postgresql://crushpilot:${POSTGRES_PASSWORD}@postgres:5432/crushpilot?sslmode=disable
+      DEMO_MODE: "false"
+      MODEL_BASE_URL: ${MODEL_BASE_URL}
+      MODEL_API_KEY: ${MODEL_API_KEY}
+      MODEL_NAME: ${MODEL_NAME}
+    depends_on:
+      postgres:
+        condition: service_healthy
+    volumes:
+      - backend_data:/data
+
+  frontend:
+    build:
+      context: ../frontend
+    depends_on:
+      - backend
+    ports:
+      - "${APP_PORT:-8080}:80"
+
+volumes:
+  postgres_data:
+  backend_data:

@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>CrushPilot</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <aside>
+    <a class="brand" href="#chat">CrushPilot</a>
+    <nav><button data-page="chat" class="active">● 聊天助手</button><button data-page="relationship">♡ 关系</button><button data-page="review">▣ 复盘</button><button data-page="settings">⚙ 设置</button></nav>
+    <button id="new-chat" class="new-chat">＋ 新建会话</button>
+    <div id="threads" class="threads"></div>
+    <p class="tip">♥ 每日情感建议<br><small>每一天都是更进一步。</small></p>
+  </aside>
+  <main>
+    <section id="chat" class="page active">
+      <header><div><h1>她现在说了什么？</h1><p>输入对方消息、聊天片段，或直接描述你的问题。</p></div><span id="status">已连接</span></header>
+      <div id="messages" class="messages"></div>
+      <div id="actions" class="actions" hidden><button>更自然</button><button>更短</button><button>更暧昧</button><button>不提问</button><button>换一个</button></div>
+      <form id="composer"><textarea id="message" rows="3" placeholder="她说：今天刚下班很累，我怎么回？"></textarea><button>发送 ↗</button></form>
+    </section>
+    <section id="relationship" class="page showcase"><h1>关系</h1><p>关系档案将在后续版本开放。</p><article><b>小雨</b><span>熟悉期 · 分享日常 · 舒适轻松</span></article></section>
+    <section id="review" class="page showcase"><h1>聊天复盘</h1><p>复盘功能仅作展示，暂不读取或分析任何聊天数据。</p><div class="cards"><article>整体趋势<br><strong>—</strong></article><article>高光时刻<br><strong>—</strong></article><article>建议下一步<br><strong>—</strong></article></div></section>
+    <section id="settings" class="page showcase"><h1>设置</h1><p>模型和隐私配置由服务器环境变量管理；此页面暂不提供修改逻辑。</p><article>默认回复风格　自然</article></section>
+  </main>
+  <script src="app.js"></script>
+</body>
+</html>

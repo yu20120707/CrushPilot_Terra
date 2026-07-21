@@ -1,5 +1,7 @@
 # Linux 启动
 
+已知服务器的 VS Code 手动部署步骤见 [服务器手动部署指引](服务器手动部署指引.md)。
+
 在 Linux 主机安装 Docker Compose 后：
 
 ```bash

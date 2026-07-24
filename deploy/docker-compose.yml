@@ -21,9 +21,13 @@ services:
       DATABASE_URL: postgresql://crushpilot@postgres:5432/crushpilot?sslmode=disable
       PGPASSWORD: ${POSTGRES_PASSWORD}
       DEMO_MODE: "false"
-      MODEL_BASE_URL: ${MODEL_BASE_URL}
-      MODEL_API_KEY: ${MODEL_API_KEY}
-      MODEL_NAME: ${MODEL_NAME}
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-deepseek}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL}
+      LONGXIA_BASE_URL: ${LONGXIA_BASE_URL}
+      LONGXIA_API_KEY: ${LONGXIA_API_KEY}
+      LONGXIA_MODEL: ${LONGXIA_MODEL}
     depends_on:
       postgres:
         condition: service_healthy

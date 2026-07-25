@@ -1,0 +1,6 @@
+task: 10-observability
+spec_ids: [SPEC-ADR-010]
+status: completed
+evidence:
+  - backend/app/knowledge/observability/metrics.py
+  - backend/tests/test_observability.py

@@ -1,0 +1,6 @@
+task: 02-skill-runtime
+spec_ids: [SPEC-ADR-001, SPEC-ADR-002, SPEC-ADR-003]
+status: completed
+evidence:
+  - backend/app/agents/assistant/resources/goutoujunshi_skill/skill.yaml
+  - backend/tests/test_skill_runtime.py

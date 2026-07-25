@@ -1,0 +1,6 @@
+task: 05-lexical-retrieval
+spec_ids: [SPEC-ADR-006, SPEC-ADR-007]
+status: completed
+evidence:
+  - backend/app/knowledge/retrieval/lexical_retriever.py
+  - backend/tests/test_retrieval_service.py

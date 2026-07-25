@@ -1,0 +1,103 @@
+from __future__ import annotations
+
+import argparse
+import os
+import sys
+from pathlib import Path
+
+ROOT = Path(__file__).resolve().parents[1]
+sys.path.insert(0, str(ROOT / "backend"))
+
+from app.db.schema import apply_schema
+from app.knowledge.ingestion import build_corpus, write_build_artifacts
+from app.knowledge.governance.corpus_version import CorpusVersion
+from app.knowledge.repositories.postgres import PostgresKnowledgeRepository
+from app.knowledge.repositories.publisher import CorpusPublisher
+from app.knowledge.retrieval.tokenizer import tokenize
+
+
+def search_tokens(build) -> dict[str, dict[str, str]]:
+    result = {}
+    for record in build.chunks:
+        chunk = record.chunk
+        result[chunk.chunk_id] = {
+            "A": " ".join(tokenize(" ".join((chunk.title, *chunk.topics, *chunk.action_labels)))),
+            "B": " ".join(
+                tokenize(
+                    " ".join(
+                        (
+                            *chunk.heading_path,
+                            *chunk.applicable_when,
+                            *chunk.not_applicable_when,
+                        )
+                    )
+                )
+            ),
+            "C": " ".join(tokenize(chunk.content)),
+            "D": " ".join(tokenize(chunk.source_path)),
+        }
+    return result
+
+
+def main() -> None:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--database-url", default=os.getenv("DATABASE_URL"))
+    parser.add_argument("--version", default="2026.07.5")
+    parser.add_argument("--embedding-model", default="BAAI/bge-small-zh-v1.5")
+    parser.add_argument(
+        "--artifacts",
+        type=Path,
+        default=ROOT / "trellis" / "retrieval-system-refactor",
+    )
+    args = parser.parse_args()
+    if not args.database_url:
+        raise SystemExit("DATABASE_URL or --database-url is required")
+
+    from sentence_transformers import SentenceTransformer
+    import psycopg
+
+    model = SentenceTransformer(args.embedding_model)
+    dimension = int(model.get_sentence_embedding_dimension())
+    build = build_corpus(
+        args.version,
+        embedding_model=args.embedding_model,
+        embedding_dimension=dimension,
+    )
+    write_build_artifacts(build, args.artifacts)
+    vectors = model.encode(
+        [record.chunk.content for record in build.chunks],
+        normalize_embeddings=True,
+    )
+    embeddings = {
+        record.chunk.chunk_id: vector.tolist()
+        for record, vector in zip(build.chunks, vectors, strict=True)
+    }
+    with psycopg.connect(args.database_url) as connection:
+        apply_schema(connection)
+        repository = PostgresKnowledgeRepository(connection)
+        expected = CorpusVersion(
+            args.version,
+            args.embedding_model,
+            build.report.embedding_dimension,
+            build.report.embedding_normalization,
+            build.report.tokenizer_version,
+            build.report.chunker_version,
+        )
+        if repository.readiness(expected).ready:
+            print(f"published_corpus={args.version} already_ready=true")
+            return
+        with connection.cursor() as cursor:
+            cursor.execute(
+                "DELETE FROM knowledge_corpus_versions "
+                "WHERE version = %s AND status = 'staging'",
+                (args.version,),
+            )
+        connection.commit()
+        repository.write_staging_build(build, search_tokens(build))
+        repository.write_embeddings(args.version, args.embedding_model, embeddings)
+        CorpusPublisher(connection).publish(args.version)
+    print(f"published_corpus={args.version} chunks={len(build.chunks)}")
+
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,7 @@
+task: 12-migration-cutover
+spec_ids: [SPEC-ADR-005]
+status: completed
+evidence:
+  - docs/检索系统迁移说明.md
+  - docs/检索系统回滚说明.md
+  - scripts/detect_legacy_retrieval_paths.py

@@ -1,0 +1,19 @@
+schema_version: 1
+requirements:
+  - {id: SPEC-ADR-001, source: "4/ADR-001", tasks: [02-skill-runtime, 09-agent-integration]}
+  - {id: SPEC-ADR-002, source: "4/ADR-002", tasks: [02-skill-runtime]}
+  - {id: SPEC-ADR-003, source: "4/ADR-003", tasks: [02-skill-runtime]}
+  - {id: SPEC-ADR-004, source: "4/ADR-004", tasks: [09-agent-integration]}
+  - {id: SPEC-ADR-005, source: "4/ADR-005", tasks: [03-ingestion-and-chunking, 12-migration-cutover]}
+  - {id: SPEC-ADR-006, source: "4/ADR-006", tasks: [04-postgres-schema, 05-lexical-retrieval, 06-vector-retrieval]}
+  - {id: SPEC-ADR-007, source: "4/ADR-007", tasks: [03-ingestion-and-chunking, 05-lexical-retrieval]}
+  - {id: SPEC-ADR-008, source: "4/ADR-008", tasks: [07-fusion-and-rerank]}
+  - {id: SPEC-ADR-009, source: "4/ADR-009", tasks: [07-fusion-and-rerank, 08-evidence-and-context]}
+  - {id: SPEC-ADR-010, source: "4/ADR-010", tasks: [08-evidence-and-context, 10-observability]}
+  - {id: SPEC-ADR-011, source: "4/ADR-011", tasks: [06-vector-retrieval]}
+  - {id: SPEC-ADR-012, source: "4/ADR-012", tasks: [01-source-inventory]}
+  - {id: SPEC-TR-001, source: "24", tasks: [01-source-inventory, 13-final-convergence]}
+  - {id: SPEC-EVAL-001, source: "25.1", tasks: [11-evaluation], evidence: backend/evaluation/golden_dataset_v1.jsonl}
+  - {id: SPEC-EVAL-002, source: "25.2", tasks: [11-evaluation], evidence: backend/evaluation/metrics.py}
+  - {id: SPEC-EVAL-003, source: "25.3", tasks: [11-evaluation, 13-final-convergence]}
+  - {id: SPEC-P0-001, source: "27/Phase 0", tasks: [11-evaluation], evidence: trellis/retrieval-system-refactor/baselines/phase-0.md}

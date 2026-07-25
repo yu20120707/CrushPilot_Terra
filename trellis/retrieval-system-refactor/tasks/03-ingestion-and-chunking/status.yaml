@@ -1,0 +1,7 @@
+task: 03-ingestion-and-chunking
+spec_ids: [SPEC-ADR-005, SPEC-ADR-007]
+status: completed
+evidence:
+  - backend/app/knowledge/ingestion/pipeline.py
+  - backend/tests/test_ingestion.py
+  - trellis/retrieval-system-refactor/build-report.json

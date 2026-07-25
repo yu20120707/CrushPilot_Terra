@@ -1,0 +1,326 @@
+from __future__ import annotations
+
+import json
+import re
+from time import perf_counter
+from typing import Any, Callable
+from uuid import uuid4
+
+from app.knowledge.domain.models import (
+    ConfirmedFact,
+    ConversationContext,
+    ConversationMessage,
+    EvidenceAssessment,
+    RetrievalPlan,
+    SceneAndRetrievalPlan,
+    SceneSnapshot,
+)
+from app.knowledge.observability.metrics import RetrievalMetrics
+from app.knowledge.retrieval.context_assembler import assemble_prompt
+from app.knowledge.retrieval.context_builder import build_context as make_context
+from app.knowledge.skill.runtime import SkillRuntime
+
+from .prompts import SAFETY_PROMPT, generation_system_prompt, scene_plan_prompt
+from .schemas import ChatResult, ChatState
+
+
+INPUT_UNSAFE_PATTERN = re.compile(
+    r"跟踪|尾随|蹲守|威胁|恐吓|强迫|逼迫|纠缠|骚扰|未成年|诈骗|冒充|灌醉|下药|偷拍"
+)
+DANGEROUS_ADVICE_PATTERN = re.compile(
+    r"跟踪|尾随|蹲守|威胁|恐吓|强迫|逼迫|纠缠|骚扰|诈骗|冒充|灌醉|下药|偷拍"
+)
+NEGATED_PREFIX = re.compile(r"(?:不要|别|不应|避免|拒绝|禁止|不能|不可以).{0,10}$")
+SCENE_POLICY_IDS = ("explicit_rejection", "emotional_support", "insufficient_information")
+ALLOWED_HARD_FILTERS = {
+    "review_status",
+    "task_types",
+    "relationship_stages",
+    "knowledge_type",
+}
+
+
+def safe_result(intent: str = "边界风险") -> ChatResult:
+    return ChatResult(
+        intent=intent,
+        judgement="狗头军师判断：这类做法可能伤害对方或越过边界。",
+        recommended_reply="先尊重对方的意愿和边界，不要继续施压。",
+        alternatives=["如果对方不想继续，请给彼此一点空间。", "先冷静下来，再用尊重的方式沟通。"],
+        warning="不提供操控、骚扰、威胁、跟踪、欺骗、性越界或未成年人相关建议。",
+    )
+
+
+def contains_unsafe_advice(text: str) -> bool:
+    return any(
+        not NEGATED_PREFIX.search(text[max(0, match.start() - 16) : match.start()])
+        for match in DANGEROUS_ADVICE_PATTERN.finditer(text)
+    )
+
+
+def validate_result(result: ChatResult, intent: str) -> ChatResult:
+    if contains_unsafe_advice(
+        "\n".join(
+            [
+                result.judgement,
+                result.recommended_reply,
+                *result.alternatives,
+                result.warning or "",
+            ]
+        )
+    ):
+        return safe_result(intent)
+    return result.model_copy(update={"intent": intent})
+
+
+class AssistantNodes:
+    def __init__(
+        self,
+        *,
+        skill_runtime: SkillRuntime,
+        retrieval_service: object,
+        call_json: Callable[[str, str, type], Any],
+        metrics: RetrievalMetrics,
+        corpus_version: str,
+        embedding_model: str | None,
+        trace_writer: object | None = None,
+        demo_mode: bool = False,
+    ):
+        self.skill_runtime = skill_runtime
+        self.retrieval_service = retrieval_service
+        self.call_json = call_json
+        self.metrics = metrics
+        self.corpus_version = corpus_version
+        self.embedding_model = embedding_model
+        self.trace_writer = trace_writer
+        self.demo_mode = demo_mode
+
+    def build_context(self, state: ChatState) -> ChatState:
+        messages = [
+            ConversationMessage.model_validate(message)
+            for message in state.get("messages", [])[-12:]
+        ]
+        context = make_context(
+            state["user_message"],
+            messages,
+            state.get("conversation_summary"),
+            state.get("relationship_id"),
+            [ConfirmedFact.model_validate(item) for item in state.get("relationship_facts", [])],
+            [ConfirmedFact.model_validate(item) for item in state.get("user_preferences", [])],
+        )
+        return {"conversation_context": context.model_dump(mode="json")}
+
+    def analyze_scene_and_plan(self, state: ChatState) -> ChatState:
+        started = perf_counter()
+        context = ConversationContext.model_validate(state["conversation_context"])
+        if INPUT_UNSAFE_PATTERN.search(context.current_message):
+            plan = _unsafe_plan(context.current_message)
+        elif self.demo_mode:
+            plan = _demo_plan(context.current_message)
+        else:
+            # call_json owns the single schema/transport retry.
+            skill = self.skill_runtime.view(SCENE_POLICY_IDS)
+            try:
+                plan = self.call_json(
+                    SAFETY_PROMPT,
+                    scene_plan_prompt(context, skill),
+                    SceneAndRetrievalPlan,
+                )
+            except Exception:
+                self._write_failure_trace(
+                    state, "scene_analysis_failed", (perf_counter() - started) * 1000
+                )
+                raise
+            finally:
+                self.metrics.observe(
+                    "scene_analysis_latency_ms", (perf_counter() - started) * 1000
+                )
+            active = [
+                scene_id
+                for scene_id in plan.scene.active_skill_scenarios
+                if scene_id in skill.scene_policies
+            ]
+            required = list(plan.retrieval.required_topics)
+            excluded = list(plan.retrieval.excluded_topics)
+            for scene_id in active:
+                policy = skill.scene_policies[scene_id]
+                required.extend(policy.get("required_topics", []))
+                excluded.extend(policy.get("excluded_topics", []))
+            plan.scene.active_skill_scenarios = active
+            plan.retrieval.required_topics = list(dict.fromkeys(required))
+            plan.retrieval.excluded_topics = list(dict.fromkeys(excluded))
+            plan.retrieval.hard_filters = {
+                key: value
+                for key, value in plan.retrieval.hard_filters.items()
+                if key in ALLOWED_HARD_FILTERS
+                and isinstance(value, list)
+                and value
+                and all(isinstance(item, str) and item for item in value)
+            }
+            plan.retrieval.hard_filters["review_status"] = ["approved"]
+        if self.demo_mode or INPUT_UNSAFE_PATTERN.search(context.current_message):
+            self.metrics.observe(
+                "scene_analysis_latency_ms", (perf_counter() - started) * 1000
+            )
+        return {"scene_and_retrieval_plan": plan.model_dump()}
+
+    def retrieve_evidence(self, state: ChatState) -> ChatState:
+        plan = SceneAndRetrievalPlan.model_validate(state["scene_and_retrieval_plan"])
+        skill = self.skill_runtime.view(plan.scene.active_skill_scenarios)
+        started = perf_counter()
+        try:
+            result = self.retrieval_service.retrieve(
+                request_id=str(uuid4()),
+                conversation_id=state.get("conversation_id", "unknown"),
+                skill_version=skill.version,
+                skill_sha256=skill.source_sha256,
+                corpus_version=self.corpus_version,
+                scene=plan.scene,
+                plan=plan.retrieval,
+                embedding_model=self.embedding_model,
+            )
+        except Exception:
+            elapsed = (perf_counter() - started) * 1000
+            self.metrics.observe("retrieval_failure_latency_ms", elapsed)
+            self._write_failure_trace(state, "retrieval_failed", elapsed)
+            raise
+        return {
+            "evidence_chunks": result.chunks,
+            "evidence_assessment": result.assessment.model_dump(),
+            "retrieval_trace_id": result.trace.request_id,
+        }
+
+    def generate_answer(self, state: ChatState) -> ChatState:
+        plan = SceneAndRetrievalPlan.model_validate(state["scene_and_retrieval_plan"])
+        if INPUT_UNSAFE_PATTERN.search(state["user_message"]):
+            result = safe_result(plan.scene.task_type)
+        elif self.demo_mode:
+            result = ChatResult(
+                intent=plan.scene.task_type,
+                judgement="狗头军师建议先接住当下情绪，再给对方留出空间。",
+                recommended_reply="听起来你今天挺累的，先好好休息，等你有空再聊。",
+                alternatives=["辛苦啦，先让自己放松一下。", "不用急着回复，忙完再说。"],
+            )
+        else:
+            context = ConversationContext.model_validate(state["conversation_context"])
+            assessment = EvidenceAssessment.model_validate(state["evidence_assessment"])
+            skill = self.skill_runtime.view(plan.scene.active_skill_scenarios)
+            prompt = assemble_prompt(
+                list(skill.core_rules),
+                skill.scene_policies,
+                skill.output_policy,
+                plan.scene,
+                assessment,
+                state.get("evidence_chunks", []),
+                context,
+                ChatResult.model_json_schema(),
+            )
+            started = perf_counter()
+            try:
+                result = self.call_json(
+                    generation_system_prompt(skill), prompt, ChatResult
+                )
+            except Exception:
+                self._mark_trace_failure(
+                    state.get("retrieval_trace_id"),
+                    "generation_failed",
+                    (perf_counter() - started) * 1000,
+                )
+                raise
+            finally:
+                self.metrics.observe(
+                    "generation_latency_ms", (perf_counter() - started) * 1000
+                )
+        return {"final_response": result.model_dump()}
+
+    def validate_output(self, state: ChatState) -> ChatState:
+        plan = SceneAndRetrievalPlan.model_validate(state["scene_and_retrieval_plan"])
+        result = validate_result(
+            ChatResult.model_validate(state["final_response"]), plan.scene.task_type
+        )
+        return {
+            "final_response": result.model_dump(),
+            "messages": [{"role": "assistant", "content": result.recommended_reply}],
+        }
+
+    def _write_failure_trace(
+        self, state: ChatState, reason: str, latency_ms: float
+    ) -> None:
+        if self.trace_writer is None:
+            return
+        try:
+            skill = self.skill_runtime.view(())
+            latency_key = {
+                "scene_analysis_failed": "scene_analysis_latency_ms",
+                "retrieval_failed": "retrieval_failure_latency_ms",
+                "generation_failed": "generation_latency_ms",
+            }[reason]
+            trace = {
+                "request_id": str(uuid4()),
+                "conversation_id": state.get("conversation_id", "unknown"),
+                "skill_version": skill.version,
+                "skill_sha256": skill.source_sha256,
+                "corpus_version": self.corpus_version,
+                "scene_snapshot": {},
+                "retrieval_plan": {},
+                "lexical_candidates": [],
+                "vector_candidates": [],
+                "fused_candidates": [],
+                "reranked_candidates": [],
+                "selected_chunks": [],
+                "evidence_assessment": {"status": "insufficient"},
+                "fallback_reason": reason,
+                "latency_ms": {latency_key: latency_ms},
+            }
+            self.trace_writer.write_trace(trace)
+        except Exception:
+            self.metrics.observe("trace_write_failure_count", 1)
+
+    def _mark_trace_failure(
+        self, trace_id: str | None, reason: str, latency_ms: float
+    ) -> None:
+        if not trace_id or self.trace_writer is None:
+            return
+        try:
+            self.trace_writer.mark_trace_failure(trace_id, reason, latency_ms)
+        except Exception:
+            self.metrics.observe("trace_write_failure_count", 1)
+
+
+def _base_retrieval(query: str, required: list[str] | None = None) -> RetrievalPlan:
+    return RetrievalPlan(
+        queries=[query],
+        required_topics=required or [],
+        optional_topics=[],
+        excluded_topics=["manipulation", "aggressive_pursuit"],
+        hard_filters={"review_status": ["approved"]},
+        soft_preferences={},
+    )
+
+
+def _demo_plan(message: str) -> SceneAndRetrievalPlan:
+    return SceneAndRetrievalPlan(
+        scene=SceneSnapshot(
+            task_type="reply",
+            recommended_action="respond",
+            current_event=message,
+            user_goal="给出自然、尊重边界的回应",
+            known_facts=[message],
+            uncertain_inferences=[],
+            key_unknowns=[],
+            counterpart_signals=[],
+            explicit_boundaries=[],
+            active_skill_scenarios=[],
+            confidence=1,
+        ),
+        retrieval=_base_retrieval(f"{message} 如何低压力回应"),
+    )
+
+
+def _unsafe_plan(message: str) -> SceneAndRetrievalPlan:
+    plan = _demo_plan(message)
+    plan.scene.task_type = "boundary"
+    plan.scene.recommended_action = "stop"
+    plan.scene.user_goal = "拒绝越界请求并提供安全替代"
+    plan.scene.explicit_boundaries = ["不得伤害、欺骗、跟踪或强迫他人"]
+    plan.retrieval = _base_retrieval("关系边界与安全替代", ["boundary"])
+    return plan

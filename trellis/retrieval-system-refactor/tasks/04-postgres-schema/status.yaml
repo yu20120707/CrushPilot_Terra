@@ -1,0 +1,6 @@
+task: 04-postgres-schema
+spec_ids: [SPEC-ADR-006]
+status: completed
+evidence:
+  - backend/app/db/schema.py
+  - backend/tests/test_postgres_repository.py

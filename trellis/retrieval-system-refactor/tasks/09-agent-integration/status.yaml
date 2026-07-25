@@ -1,0 +1,6 @@
+task: 09-agent-integration
+spec_ids: [SPEC-ADR-001, SPEC-ADR-004]
+status: completed
+evidence:
+  - backend/app/agents/assistant/graph.py
+  - backend/tests/test_agent_integration.py

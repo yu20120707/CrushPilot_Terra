@@ -5,4 +5,7 @@ langgraph==1.2.9
 langgraph-checkpoint-sqlite==3.1.0
 langgraph-checkpoint-postgres==3.1.0
 psycopg[binary,pool]>=3.3
-
+sentence-transformers>=3.0,<4
+PyYAML>=6.0,<7
+jsonschema>=4.20,<5
+jieba>=0.42,<0.43

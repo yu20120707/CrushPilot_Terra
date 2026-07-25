@@ -1,0 +1,7 @@
+task: 08-evidence-and-context
+spec_ids: [SPEC-ADR-009, SPEC-ADR-010]
+status: completed
+evidence:
+  - backend/app/knowledge/retrieval/evidence_gate.py
+  - backend/app/knowledge/retrieval/context_assembler.py
+  - backend/tests/test_context_and_assembly.py

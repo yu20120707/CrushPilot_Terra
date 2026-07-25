@@ -1,0 +1,10 @@
+task: 11-evaluation
+spec_ids: [SPEC-EVAL-001, SPEC-EVAL-002, SPEC-EVAL-003, SPEC-P0-001]
+status: completed
+evidence:
+  - backend/evaluation/golden_dataset_v1.jsonl
+  - backend/evaluation/metrics.py
+  - backend/tests/test_evaluation.py
+limitations:
+  - Evidence labels are category-level bootstrap annotations and require human relevance sampling before a release Gate.
+  - Real retrieval predictions have not yet been evaluated against release thresholds.

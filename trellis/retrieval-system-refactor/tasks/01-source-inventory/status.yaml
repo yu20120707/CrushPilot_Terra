@@ -1,0 +1,6 @@
+task: 01-source-inventory
+spec_ids: [SPEC-ADR-012, SPEC-TR-001]
+status: completed
+evidence:
+  - trellis/retrieval-system-refactor/source-manifest.yaml
+  - scripts/verify_source_coverage.py

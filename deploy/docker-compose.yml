@@ -1,6 +1,6 @@
 services:
   postgres:
-    image: postgres:16-alpine
+    image: pgvector/pgvector:pg16
     environment:
       POSTGRES_DB: crushpilot
       POSTGRES_USER: crushpilot
@@ -21,9 +21,50 @@ services:
       DATABASE_URL: postgresql://crushpilot@postgres:5432/crushpilot?sslmode=disable
       PGPASSWORD: ${POSTGRES_PASSWORD}
       DEMO_MODE: "false"
-      MODEL_BASE_URL: ${MODEL_BASE_URL}
-      MODEL_API_KEY: ${MODEL_API_KEY}
-      MODEL_NAME: ${MODEL_NAME}
+      MODEL_PROVIDER: ${MODEL_PROVIDER:-deepseek}
+      CORPUS_VERSION: ${CORPUS_VERSION:-2026.07.5}
+      EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
+      EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-512}
+      EMBEDDING_NORMALIZATION: ${EMBEDDING_NORMALIZATION:-l2}
+      TOKENIZER_VERSION: ${TOKENIZER_VERSION:-jieba-0.42}
+      CHUNKER_VERSION: ${CHUNKER_VERSION:-heading-semantic-v1}
+      ALLOW_LEXICAL_ONLY_STARTUP: ${ALLOW_LEXICAL_ONLY_STARTUP:-false}
+      DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}
+      DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
+      DEEPSEEK_MODEL: ${DEEPSEEK_MODEL}
+      LONGXIA_BASE_URL: ${LONGXIA_BASE_URL}
+      LONGXIA_API_KEY: ${LONGXIA_API_KEY}
+      LONGXIA_MODEL: ${LONGXIA_MODEL}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      corpus-publisher:
+        condition: service_completed_successfully
+    volumes:
+      - backend_data:/data
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready')"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+
+  corpus-publisher:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    command:
+      - python
+      - /app/scripts/publish_corpus.py
+      - --database-url
+      - postgresql://crushpilot@postgres:5432/crushpilot?sslmode=disable
+      - --version
+      - ${CORPUS_VERSION:-2026.07.5}
+      - --embedding-model
+      - ${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
+      - --artifacts
+      - /data/corpus-artifacts
+    environment:
+      PGPASSWORD: ${POSTGRES_PASSWORD}
     depends_on:
       postgres:
         condition: service_healthy
@@ -34,7 +75,8 @@ services:
     build:
       context: ../frontend
     depends_on:
-      - backend
+      backend:
+        condition: service_healthy
     ports:
       - "${APP_PORT:-8080}:80"
 

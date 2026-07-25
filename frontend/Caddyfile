@@ -1,7 +1,7 @@
 :80 {
   root * /usr/share/caddy
   encode zstd gzip
-  @api path /api/* /health
+  @api path /api/* /health /ready /metrics
   reverse_proxy @api backend:8000 {
     flush_interval -1
   }

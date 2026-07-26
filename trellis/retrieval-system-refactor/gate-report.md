@@ -29,7 +29,7 @@ case 得到 HTTP 402；见
 
 ## 已验证
 
-- Python 全套：152/152 PASS，使用隔离数据库 `crushpilot_test`，0 skipped。
+- Python 全套：153/153 PASS，使用隔离数据库 `crushpilot_test`，0 skipped。
 - PostgreSQL/pgvector integration：schema、跨版本约束、staging/publish/rollback、
   exact vector、Trace round-trip 全部通过。
 - Source Coverage：`unprocessed_sources=0`。
@@ -37,6 +37,22 @@ case 得到 HTTP 402；见
 - Legacy Retrieval：`legacy_retrieval_paths=0`。
 - Corpus `2026.07.6`：40 documents、380 chunks、380 embeddings。
 - Gate runner：无 Golden label 注入、原子发布结果、缺 Trace fail-closed，阶段 CR PASS。
+
+## Rerank/Diversity 诊断与修复
+
+已有完整 Trace 显示，gold + acceptable 证据在 lexical/vector/fused/reranked/selected
+阶段的 case 命中分别为 `80/95/95/62/47`（分母 112）。48 个 fused 命中后丢失的
+case 中，33 个发生在 rerank Top 6，15 个发生在 Diversity/后处理。
+
+根因之一是运行时先把 reranker 输出截为 6 条，再执行 excluded、not-applicable、
+同文档上限和重叠过滤，导致 rank 7–15 无法补位。现已统一正常与 reranker 降级路径为：
+
+```text
+RRF Top 15 -> Reranker/RRF fallback Top 15 -> Diversity -> Final Top 6
+```
+
+新增正常/降级 backfill 回归测试并经两轮 CR PASS。该修复尚未形成新的完整 120 Gate
+证据；2026-07-27 00:42:06 +08:00 重试仍在第一个 Scene Plan case 返回 HTTP 402。
 - Required-topic lexical：独立 user/topic tsquery、topic 1.5× 排名权重、否定词噪声
   隔离，真实 PostgreSQL smoke 与阶段 CR PASS。
 - Scene topic ontology：共享 search terms + planning meanings，无 Golden selector/category

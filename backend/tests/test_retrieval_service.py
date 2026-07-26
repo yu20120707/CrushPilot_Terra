@@ -233,6 +233,28 @@ class RetrievalServiceTests(unittest.TestCase):
             "vector_unavailable,reranker_unavailable",
         )
 
+    def test_diversity_backfills_after_high_ranked_candidates_are_excluded(self):
+        candidates = [
+            chunk(f"excluded-{index}", topic="aggressive")
+            for index in range(6)
+        ] + [chunk("safe-7"), chunk("safe-8")]
+        values = {"primary": candidates, "secondary": []}
+
+        for unavailable in (False, True):
+            with self.subTest(reranker_unavailable=unavailable):
+                result, *_ = self.run_service(
+                    values, values, unavailable=unavailable
+                )
+                self.assertEqual(
+                    [item["chunk_id"] for item in result.chunks],
+                    ["safe-7", "safe-8"],
+                )
+                self.assertEqual(len(result.trace.reranked_candidates), 8)
+                self.assertEqual(
+                    result.trace.fallback_reason,
+                    "reranker_unavailable" if unavailable else None,
+                )
+
     def test_insufficient_evidence_is_not_injected_into_generation(self):
         unrelated = chunk("unrelated", topic="invitation")
         values = {"primary": [unrelated], "secondary": []}

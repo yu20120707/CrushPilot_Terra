@@ -139,11 +139,11 @@ class RetrievalService:
                     _scene_text(scene),
                     plan.queries[0],
                     self.reranker,
-                    limit=min(plan.final_top_k, 6),
+                    limit=min(plan.rerank_top_k, 15),
                 )
             except Exception as exc:
                 logger.warning("reranker unavailable: %s", exc)
-                reranked = fused[: min(plan.final_top_k, 6)]
+                reranked = fused[: min(plan.rerank_top_k, 15)]
                 fallback_reasons.append("reranker_unavailable")
         else:
             reranked = []

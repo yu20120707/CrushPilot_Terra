@@ -31,12 +31,14 @@
 8. Compose backend/publisher 默认 Corpus 同步为 07.6，并新增防漂移测试。
 9. Phase 12 从错误的 completed 恢复为 in_progress。ADR-013 提议用隔离 Golden 回放
    替代无法追溯的在线 shadow；状态为 Proposed，等待架构所有者批准。
-10. 完整测试 152/152 PASS，隔离 PostgreSQL integration 5/5 PASS，0 skipped。
+10. 完整测试 153/153 PASS，隔离 PostgreSQL integration 5/5 PASS，0 skipped。
 11. 全文需求矩阵发现并闭合三项假绿：离线 metadata suggestion 严格 Schema
     Validation 与 missing/invalid 报告、`known_facts` 来源约束、`TRACE_DEBUG`
     受控样本脱敏/限长/真实 PostgreSQL 持久化；各阶段独立 CR 均 PASS。
 12. 最终 Prompt 已在排序后递归移除内部 score/rank 字段；production-shaped
     adversarial E2E 证明模型不可见内部评分，信息不足场景会提出关键补充问题。
+13. 修复 reranker 正常/降级路径在 Diversity 前提前截 Top 6 的问题；现在统一将
+    Top 15 交给 Diversity 后再选 Final Top 6，backfill 回归和两轮 CR PASS。
 
 ## 最新完整 Gate
 

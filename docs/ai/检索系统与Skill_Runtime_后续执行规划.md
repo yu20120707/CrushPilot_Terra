@@ -78,7 +78,7 @@ runner 在发布 Gate 未通过时退出 1，但应保留完整 results/predicti
 
 ## Phase D：最终验证与独立审核
 
-1. 使用隔离 `crushpilot_test` 运行完整 152 tests（新增测试后以最新总数为准），
+1. 使用隔离 `crushpilot_test` 运行完整 153 tests（新增测试后以最新总数为准），
    必须 0 skipped。
 2. 运行 source/version/traceability/legacy 四个治理 Gate。
 3. 新开未参与实现的 subagent：

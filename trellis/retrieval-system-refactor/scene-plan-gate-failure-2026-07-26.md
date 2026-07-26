@@ -22,5 +22,11 @@
 - 完成 case：0/120
 - 结果：第一个 case 仍返回 HTTP 402，未发布 final/partial artifact
 
+## Gold-plan 诊断后重试
+
+- 时间：2026-07-27 01:01:19 +08:00
+- 完成 case：0/120
+- 结果：第一个 case 仍返回 HTTP 402，未发布 final/partial artifact
+
 环境从本地 ignored `deploy/.env` 注入；本文档不记录 URL 之外的配置值、API key、
 request payload 或用户数据。模型额度恢复后必须从头重新运行 120 条。

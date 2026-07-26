@@ -39,6 +39,9 @@
     adversarial E2E 证明模型不可见内部评分，信息不足场景会提出关键补充问题。
 13. 修复 reranker 正常/降级路径在 Diversity 前提前截 Top 6 的问题；现在统一将
     Top 15 交给 Diversity 后再选 Final Top 6，backfill 回归和两轮 CR PASS。
+14. 完成 gold-plan RRF-order 离线 ceiling replay：Recall@20 0.84226、MRR
+    0.29152、nDCG@10 0.22962。该结果不是与 Live Planner 的严格 A/B；它证明
+    reranker 调整之外仍有上游 exact-gold 召回缺口。
 
 ## 最新完整 Gate
 
@@ -83,6 +86,10 @@ scene-only 评估把 plan topic coverage 从 0.65556 提高到 0.70000，但 rec
 正式 runner 于 2026-07-27 00:30:21 +08:00 再次执行，第一个 case 即返回
 HTTP 402，因此仍没有发布 final/partial artifact。耐久记录：
 [`scene-plan-gate-failure-2026-07-26.md`](../../trellis/retrieval-system-refactor/scene-plan-gate-failure-2026-07-26.md)。
+
+完成 gold-plan RRF ceiling 诊断后又于 2026-07-27 01:01:19 +08:00 重试，
+第一个 case 仍返回 HTTP 402。当前必须由用户恢复 DeepSeek 额度或提供另一套已配置、
+可真实调用且满足相同 JSON Schema 契约的模型服务，才能继续正式 120-case loop。
 
 ## 必须保留的边界
 

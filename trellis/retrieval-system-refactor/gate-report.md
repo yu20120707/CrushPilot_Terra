@@ -53,6 +53,11 @@ RRF Top 15 -> Reranker/RRF fallback Top 15 -> Diversity -> Final Top 6
 
 新增正常/降级 backfill 回归测试并经两轮 CR PASS。该修复尚未形成新的完整 120 Gate
 证据；2026-07-27 00:42:06 +08:00 重试仍在第一个 Scene Plan case 返回 HTTP 402。
+
+离线 gold-plan RRF-order ceiling replay 得到 Recall@20 `0.84226`、MRR `0.29152`、
+nDCG@10 `0.22962`、平均 selected `5.575`。该结果不能与 Live Planner 行做严格
+A/B，但证明 reranker 调整之外仍有上游 exact-gold 召回缺口。完整限制和下一实验见
+[`reranker-selection-analysis-2026-07-27.md`](reranker-selection-analysis-2026-07-27.md)。
 - Required-topic lexical：独立 user/topic tsquery、topic 1.5× 排名权重、否定词噪声
   隔离，真实 PostgreSQL smoke 与阶段 CR PASS。
 - Scene topic ontology：共享 search terms + planning meanings，无 Golden selector/category

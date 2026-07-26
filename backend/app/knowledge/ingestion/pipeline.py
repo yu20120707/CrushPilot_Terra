@@ -7,6 +7,7 @@ import tempfile
 import uuid
 from dataclasses import dataclass
 from pathlib import Path
+from typing import Callable, Literal
 
 import yaml
 
@@ -20,7 +21,7 @@ from app.knowledge.governance.source_manifest import (
 
 from .chunker import chunk_sections
 from .markdown import parse_markdown_file
-from .metadata_enricher import suggest_metadata
+from .metadata_enricher import SuggestedMetadata, suggest_metadata
 
 
 SUGGESTED_METADATA_FIELDS = (
@@ -49,6 +50,7 @@ class ChunkRelationships:
 class IngestedChunk:
     chunk: KnowledgeChunk
     relationships: ChunkRelationships
+    metadata_suggestion_status: Literal["accepted", "missing", "invalid"]
 
 
 @dataclass(frozen=True)
@@ -63,6 +65,8 @@ class BuildReport:
     chunk_count: int
     missing_metadata: dict[str, int]
     missing_metadata_ratios: dict[str, float]
+    metadata_suggestion_statuses: dict[str, int]
+    metadata_suggestion_ratios: dict[str, float]
 
 
 @dataclass(frozen=True)
@@ -77,17 +81,32 @@ def _stable_id(prefix: str, *parts: str) -> str:
 
 
 def ingest_document(
-    path: Path, root: Path, corpus_version: str
+    path: Path,
+    root: Path,
+    corpus_version: str,
+    metadata_suggester: Callable[[str, list[str], str], object | None] | None = None,
 ) -> list[IngestedChunk]:
     relative = path.relative_to(root).as_posix()
     source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
     document_id = _stable_id("document", corpus_version, relative, source_hash)
     semantic_chunks = chunk_sections(parse_markdown_file(path))
-    chunks: list[KnowledgeChunk] = []
+    chunks: list[tuple[KnowledgeChunk, Literal["accepted", "missing", "invalid"]]] = []
     for index, item in enumerate(semantic_chunks):
-        suggested = suggest_metadata(
+        fallback = suggest_metadata(
             item.heading_path[-1], list(item.heading_path), item.content
         )
+        suggested = fallback
+        suggestion_status: Literal["accepted", "missing", "invalid"] = "missing"
+        if metadata_suggester is not None:
+            try:
+                raw_suggestion = metadata_suggester(
+                    item.heading_path[-1], list(item.heading_path), item.content
+                )
+                if raw_suggestion is not None:
+                    suggested = SuggestedMetadata.model_validate(raw_suggestion)
+                    suggestion_status = "accepted"
+            except Exception:
+                suggestion_status = "invalid"
         parent_path = item.heading_path[:-1]
         parent_id = (
             _stable_id("section", document_id, *parent_path) if parent_path else None
@@ -95,7 +114,7 @@ def ingest_document(
         chunk_id = _stable_id(
             "chunk", document_id, "/".join(item.heading_path), str(index), item.content
         )
-        chunks.append(
+        chunks.append((
             KnowledgeChunk(
                 chunk_id=chunk_id,
                 document_id=document_id,
@@ -117,22 +136,24 @@ def ingest_document(
                 source_sha256=source_hash,
                 corpus_version=corpus_version,
                 token_count=item.token_count,
-            )
-        )
+            ),
+            suggestion_status,
+        ))
     return [
         IngestedChunk(
             chunk=chunk,
             relationships=ChunkRelationships(
                 parent_section_id=chunk.parent_section_id,
-                previous_chunk_id=chunks[index - 1].chunk_id if index else None,
+                previous_chunk_id=chunks[index - 1][0].chunk_id if index else None,
                 next_chunk_id=(
-                    chunks[index + 1].chunk_id
+                    chunks[index + 1][0].chunk_id
                     if index + 1 < len(chunks)
                     else None
                 ),
             ),
+            metadata_suggestion_status=status,
         )
-        for index, chunk in enumerate(chunks)
+        for index, (chunk, status) in enumerate(chunks)
     ]
 
 
@@ -145,10 +166,11 @@ def build_corpus(
     embedding_normalization: str = "l2",
     tokenizer_version: str = "jieba-0.42",
     chunker_version: str = "heading-semantic-v1",
+    metadata_suggester: Callable[[str, list[str], str], object | None] | None = None,
 ) -> CorpusBuild:
     root = root or source_root()
     by_document = [
-        (path, ingest_document(path, root, corpus_version))
+        (path, ingest_document(path, root, corpus_version, metadata_suggester))
         for path in scan_sources(root)
     ]
     counts = {
@@ -165,6 +187,12 @@ def build_corpus(
         for field in SUGGESTED_METADATA_FIELDS
     }
     total = len(chunks)
+    suggestion_statuses = {
+        status: sum(
+            record.metadata_suggestion_status == status for record in chunks
+        )
+        for status in ("accepted", "missing", "invalid")
+    }
     report = BuildReport(
         corpus_version=corpus_version,
         embedding_model=embedding_model,
@@ -178,6 +206,11 @@ def build_corpus(
         missing_metadata_ratios={
             field: count / total if total else 0.0
             for field, count in missing.items()
+        },
+        metadata_suggestion_statuses=suggestion_statuses,
+        metadata_suggestion_ratios={
+            status: count / total if total else 0.0
+            for status, count in suggestion_statuses.items()
         },
     )
     return CorpusBuild(chunks=chunks, manifest=manifest, report=report)
@@ -222,6 +255,8 @@ def write_build_artifacts(build: CorpusBuild, output: Path) -> dict[str, Path]:
         "chunk_count": build.report.chunk_count,
         "missing_metadata": build.report.missing_metadata,
         "missing_metadata_ratios": build.report.missing_metadata_ratios,
+        "metadata_suggestion_statuses": build.report.metadata_suggestion_statuses,
+        "metadata_suggestion_ratios": build.report.metadata_suggestion_ratios,
     }
     artifacts = build_artifact_paths(output)
     _atomic_write(

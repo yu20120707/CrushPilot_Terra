@@ -127,6 +127,7 @@ class CrushPilotTests(unittest.TestCase):
             patch("app.main.MODEL_BASE_URL", "https://model.test"),
             patch("app.main.MODEL_API_KEY", "key"),
             patch("app.main.MODEL_NAME", "model"),
+            patch("app.main.MODEL_TRUST_ENV", False),
             patch(
                 "app.main.httpx.post",
                 side_effect=[httpx.ConnectError("down", request=request), success],
@@ -135,6 +136,7 @@ class CrushPilotTests(unittest.TestCase):
         ):
             self.assertEqual(call_json("system", "user", ChatResult), schema)
         self.assertEqual(post.call_count, 2)
+        self.assertFalse(post.call_args.kwargs["trust_env"])
 
     def test_removed_legacy_runtime_modules_are_absent(self):
         app_dir = Path(__file__).parents[1] / "app"

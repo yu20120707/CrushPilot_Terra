@@ -37,8 +37,15 @@ class GovernanceScriptTests(unittest.TestCase):
         self._write_yaml(
             trace,
             {
+                "schema_version": 2,
                 "requirements": [
-                    {"id": "SPEC-001", "source": "design/1", "tasks": ["01-task"]}
+                    {
+                        "id": "SPEC-001",
+                        "source_sections": ["design/1"],
+                        "summary": "requirement",
+                        "tasks": ["01-task"],
+                        "evidence": {"files": ["evidence.txt"]},
+                    }
                 ]
             },
         )
@@ -61,8 +68,15 @@ class GovernanceScriptTests(unittest.TestCase):
         self._write_yaml(
             trace,
             {
+                "schema_version": 2,
                 "requirements": [
-                    {"id": "SPEC-001", "source": "design/1", "tasks": ["01-task"]}
+                    {
+                        "id": "SPEC-001",
+                        "source_sections": ["design/1"],
+                        "summary": "requirement",
+                        "tasks": ["01-task"],
+                        "evidence": {"files": ["missing.txt"]},
+                    }
                 ]
             },
         )
@@ -77,8 +91,101 @@ class GovernanceScriptTests(unittest.TestCase):
         result = verify_traceability(
             trace, tasks, self.root, {"SPEC-001", "SPEC-002"}
         )
+        self.assertEqual(result["unmapped_requirements"], 2)
+        self.assertEqual(result["unverified_tasks"], 1)
+
+    def test_traceability_requires_exact_bidirectional_task_mapping(self):
+        evidence = self.root / "evidence.txt"
+        evidence.write_text("verified", encoding="utf-8")
+        trace = self.root / "traceability.yaml"
+        tasks = self.root / "tasks"
+        self._write_yaml(
+            trace,
+            {
+                "schema_version": 2,
+                "requirements": [
+                    {
+                        "id": "SPEC-001",
+                        "source_sections": ["design/1"],
+                        "summary": "requirement",
+                        "tasks": ["01-task"],
+                        "evidence": {"files": ["evidence.txt"]},
+                    }
+                ]
+            },
+        )
+        self._write_yaml(
+            tasks / "01-task/status.yaml",
+            {
+                "task": "01-task",
+                "spec_ids": ["SPEC-001", "SPEC-EXTRA"],
+                "status": "completed",
+                "evidence": ["evidence.txt"],
+            },
+        )
+
+        result = verify_traceability(trace, tasks, self.root, {"SPEC-001"})
+
         self.assertEqual(result["unmapped_requirements"], 1)
         self.assertEqual(result["unverified_tasks"], 1)
+
+    def test_traceability_rejects_wrong_schema_and_missing_required_task(self):
+        trace = self.root / "traceability.yaml"
+        tasks = self.root / "tasks"
+        self._write_yaml(trace, {"schema_version": 1, "requirements": []})
+
+        result = verify_traceability(
+            trace,
+            tasks,
+            self.root,
+            set(),
+            {"01-task"},
+        )
+
+        self.assertEqual(result["unmapped_requirements"], 1)
+        self.assertEqual(result["details"]["missing_tasks"], ["01-task"])
+        self.assertEqual(result["unverified_tasks"], 1)
+
+    def test_traceability_rejects_string_tasks_and_duplicate_task_specs(self):
+        evidence = self.root / "evidence.txt"
+        evidence.write_text("verified", encoding="utf-8")
+        trace = self.root / "traceability.yaml"
+        tasks = self.root / "tasks"
+        self._write_yaml(
+            trace,
+            {
+                "schema_version": 2,
+                "requirements": [
+                    {
+                        "id": "SPEC-001",
+                        "source_sections": ["design/1"],
+                        "summary": "requirement",
+                        "tasks": "01-task",
+                        "evidence": {"files": ["evidence.txt"]},
+                    }
+                ],
+            },
+        )
+        self._write_yaml(
+            tasks / "01-task/status.yaml",
+            {
+                "task": "01-task",
+                "spec_ids": ["SPEC-001", "SPEC-001"],
+                "status": "completed",
+                "evidence": ["evidence.txt"],
+            },
+        )
+
+        result = verify_traceability(
+            trace,
+            tasks,
+            self.root,
+            {"SPEC-001"},
+            {"01-task"},
+        )
+
+        self.assertGreater(result["unmapped_requirements"], 0)
+        self.assertEqual(result["details"]["invalid_tasks"], ["01-task"])
 
     def test_corpus_version_requires_matching_versions_models_and_counts(self):
         manifest = self.root / "manifest.yaml"

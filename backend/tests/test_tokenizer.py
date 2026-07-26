@@ -1,6 +1,10 @@
 import unittest
 
-from app.knowledge.retrieval.tokenizer import build_query_tokens, tokenize
+from app.knowledge.retrieval.tokenizer import (
+    build_query_tokens,
+    build_topic_tokens,
+    tokenize,
+)
 
 
 class TokenizerTests(unittest.TestCase):
@@ -11,9 +15,13 @@ class TokenizerTests(unittest.TestCase):
         self.assertIn("关系", tokens)
         self.assertNotIn("我", tokens)
 
-    def test_required_topics_receive_extra_weight(self):
-        tokens = build_query_tokens("如何回复", ["明确拒绝"])
-        self.assertGreaterEqual(tokens.count("拒绝"), 2)
+    def test_query_tokens_keep_natural_negation(self):
+        self.assertIn("不", build_query_tokens("请不要联系", ["explicit_rejection"]))
+
+    def test_topic_tokens_expand_controlled_topics_without_negation_noise(self):
+        tokens = build_topic_tokens(["reduce_pressure"])
+        self.assertIn("降压", tokens)
+        self.assertNotIn("不", tokens)
 
 
 if __name__ == "__main__":

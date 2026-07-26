@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
-from .tokenizer import build_query_tokens
+from .tokenizer import build_query_tokens, build_topic_tokens
 
 
 FILTER_SQL = {
@@ -43,9 +43,12 @@ class LexicalRetriever:
             raise ValueError(f"unsupported hard filters: {sorted(unknown)}")
         if any(not values for values in hard_filters.values()):
             return []
-        tokens = build_query_tokens(query, required_topics)
-        if not tokens:
+        query_tokens = build_query_tokens(query, required_topics)
+        topic_tokens = build_topic_tokens(required_topics)
+        if not query_tokens and not topic_tokens:
             return []
+        query_tsquery = _or_tsquery(query_tokens) or "'__no_query__'"
+        topic_tsquery = _or_tsquery(topic_tokens) or "'__no_topic__'"
         filter_sql = "".join(
             f"\n                  AND {FILTER_SQL[key]}"
             for key in sorted(hard_filters)
@@ -56,7 +59,8 @@ class LexicalRetriever:
                 f"""
                 SELECT c.id AS chunk_id, c.document_id, c.parent_section_id,
                        c.title, c.heading_path, c.content, c.metadata,
-                       ts_rank_cd(c.search_vector, q.query, 2)
+                       ts_rank_cd(c.search_vector, uq.query, 2)
+                         + 1.5 * ts_rank_cd(c.search_vector, tq.query, 2)
                          + CASE
                              WHEN COALESCE(c.metadata->'topics', '[]'::jsonb) ?| %s
                              THEN 0.02
@@ -64,11 +68,13 @@ class LexicalRetriever:
                            END AS score
                 FROM knowledge_corpus_versions v
                 JOIN knowledge_chunks c ON c.corpus_version = v.version
-                CROSS JOIN to_tsquery('simple', %s) AS q(query)
+                CROSS JOIN to_tsquery('simple', %s) AS uq(query)
+                CROSS JOIN to_tsquery('simple', %s) AS tq(query)
                 WHERE v.status = 'published'
                   AND c.review_status = 'approved'
                   AND (
-                    c.search_vector @@ q.query
+                    c.search_vector @@ uq.query
+                    OR c.search_vector @@ tq.query
                     OR COALESCE(c.metadata->'topics', '[]'::jsonb) ?| %s
                   )
                   AND NOT (COALESCE(c.metadata->'topics', '[]'::jsonb) ?| %s)
@@ -78,7 +84,8 @@ class LexicalRetriever:
                 """,
                 (
                     required_topics,
-                    _or_tsquery(tokens),
+                    query_tsquery,
+                    topic_tsquery,
                     required_topics,
                     excluded_topics,
                     *filter_params,

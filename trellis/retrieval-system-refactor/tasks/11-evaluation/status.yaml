@@ -1,10 +1,10 @@
 task: 11-evaluation
-spec_ids: [SPEC-EVAL-001, SPEC-EVAL-002, SPEC-EVAL-003, SPEC-P0-001]
+spec_ids: [SPEC-PLAN-002, SPEC-RERANK-001, SPEC-EVID-002, SPEC-FAIL-007, SPEC-EVAL-001, SPEC-EVAL-002, SPEC-EVAL-003, SPEC-TEST-E2E-001, SPEC-TEST-E2E-002, SPEC-TEST-E2E-003, SPEC-MIG-000, SPEC-DONE-010]
 status: completed
 evidence:
   - backend/evaluation/golden_dataset_v1.jsonl
   - backend/evaluation/metrics.py
   - backend/tests/test_evaluation.py
 limitations:
-  - Evidence labels are category-level bootstrap annotations and require human relevance sampling before a release Gate.
-  - Real retrieval predictions have not yet been evaluated against release thresholds.
+  - Latest complete real retrieval predictions do not yet satisfy release thresholds.
+  - The newest Scene Planner prompt has not completed a 120-case run because the model provider returns HTTP 402.

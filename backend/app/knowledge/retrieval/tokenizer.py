@@ -4,6 +4,8 @@ import re
 
 import jieba
 
+from app.knowledge.domain.models import topic_search_text
+
 
 TOKENIZER_VERSION = "jieba-0.42"
 STOP_WORDS = {
@@ -44,10 +46,11 @@ def tokenize(text: str) -> list[str]:
 
 
 def build_query_tokens(query: str, required_topics: list[str]) -> list[str]:
-    # Repetition is intentional: PostgreSQL query construction can weight required topics.
-    return tokenize(query) + [
-        token
-        for topic in required_topics
-        for token in tokenize(topic)
-        for _ in range(2)
+    return tokenize(query)
+
+
+def build_topic_tokens(required_topics: list[str]) -> list[str]:
+    tokens = tokenize(topic_search_text(required_topics)) + [
+        token for topic in required_topics for token in tokenize(topic)
     ]
+    return [token for token in tokens if token not in {"不", "没", "没有"}]

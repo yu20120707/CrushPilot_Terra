@@ -1,7 +1,19 @@
 from __future__ import annotations
 
 import hashlib
+import re
 from typing import Any
+
+
+DEBUG_SAMPLE_MAX_LENGTH = 200
+_EMAIL = re.compile(r"[\w.+-]+@[\w.-]+\.[A-Za-z]{2,}")
+_PHONE = re.compile(r"(?<!\d)(?:\+?\d[\d -]{7,}\d)(?!\d)")
+
+
+def controlled_debug_sample(value: str) -> str:
+    redacted = _EMAIL.sub("[email]", value)
+    redacted = _PHONE.sub("[phone]", redacted)
+    return redacted[:DEBUG_SAMPLE_MAX_LENGTH]
 
 
 def redacted_message_summary(message: str) -> dict[str, Any]:

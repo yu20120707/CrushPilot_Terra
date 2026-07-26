@@ -1,140 +1,152 @@
 # 检索系统与 Skill Runtime 会话交接（2026-07-26）
 
-## 1. 当前结论
+## 当前状态
 
-本任务尚未完成，不能进入最终验收。
+- 目标仍为 active，不能宣告完成或发布。
+- 当前分支：`codex/retrieval-skill-runtime-v1-resume`，跟踪
+  `origin/codex/retrieval-skill-runtime-v1`。
+- HEAD 基线：`3812430 feat: implement retrieval and skill runtime foundation`。
+- 当前改动尚未 commit/push；不得切回含历史密钥的旧分支。
+- 主证据库：`127.0.0.1:55432/postgres`，`2026.07.6` published。
+- 隔离测试库：`127.0.0.1:55432/crushpilot_test`。
 
-当前分支：`codex/retrieval-skill-runtime-v1`
+## 本轮完成
 
-已完成的主要实现：
+1. 修复 Gate runner 可信度：完整 trace 分母、真实 source coverage、stale artifact 清理、
+   原子 predictions/results、失败 Gate 写结果并退出 1；独立 CR PASS。
+2. Corpus 升级并发布 `2026.07.6`：40 documents、380 chunks、380 embeddings；
+   Golden labels 仅做正文稳定映射，无标签注入；独立 CR PASS。
+3. Corpus embedding input 加入 title、heading、共享中文 topic terms；向量 query 使用相同
+   topic ontology。BGE base 实测劣于 BGE small，保持 small。
+4. 修复缺失上下文与明确拒绝优先级；删除过宽 regex/action map；多轮 CR 最终 PASS。
+5. 修复 required-topic 假权重：
+   - user query 与 topic expansion 使用两个 PostgreSQL tsquery；
+   - topic `ts_rank_cd` 真实 1.5×；
+   - topic 侧过滤孤立 `不/没/没有`，自然 query 保留否定；
+   - 50 项相关测试、真实 PostgreSQL smoke、独立 CR PASS。
+6. Scene Planner Prompt 复用共享 ontology，并增加通用 planning meaning；
+   无 Golden category/selector/chunk ID；阶段 CR 经 P2 测试修复后 PASS。
+7. Gate 结果新增 action-direction accuracy 与 lexical/vector/rerank latency P50/P95；
+   18 项评测测试、独立 CR PASS。
+8. Compose backend/publisher 默认 Corpus 同步为 07.6，并新增防漂移测试。
+9. Phase 12 从错误的 completed 恢复为 in_progress。ADR-013 提议用隔离 Golden 回放
+   替代无法追溯的在线 shadow；状态为 Proposed，等待架构所有者批准。
+10. 完整测试 152/152 PASS，隔离 PostgreSQL integration 5/5 PASS，0 skipped。
+11. 全文需求矩阵发现并闭合三项假绿：离线 metadata suggestion 严格 Schema
+    Validation 与 missing/invalid 报告、`known_facts` 来源约束、`TRACE_DEBUG`
+    受控样本脱敏/限长/真实 PostgreSQL 持久化；各阶段独立 CR 均 PASS。
+12. 最终 Prompt 已在排序后递归移除内部 score/rank 字段；production-shaped
+    adversarial E2E 证明模型不可见内部评分，信息不足场景会提出关键补充问题。
 
-- Skill Runtime 编译、版本、哈希、防篡改和结构化场景策略；
-- 40 份文档、380 个 chunks 的摄取、manifest、metadata 和覆盖率 Gate；
-- PostgreSQL + pgvector 七表、版本发布/回滚、FTS、向量检索和 Trace；
-- 生产场景分析、检索计划、混合检索、CrossEncoder、Evidence Gate 和生成链；
-- 120 条 Golden Dataset、三个逐条人工 review artifact 和离线指标；
-- Golden review 的 `07.4 -> 07.5` 正文级稳定映射；
-- `recommended_action` 结构化输出、评测和 Retrieval Trace 持久化；
-- 旧检索路径删除和部署/迁移脚本。
+## 最新完整 Gate
 
-## 2. 本会话完成的关键修复
-
-1. 真实 PostgreSQL/pgvector 集成发现并修复 UUID/string 边界问题。
-2. 真实 LLM 生成未知 hard filter 时，在 agent 信任边界执行白名单归一化，底层数据库继续 fail-closed。
-3. 移除 Golden label 注入和 selector priority 调参；live runner 只把 query/case ID 送入生产节点。
-4. 对 120 条 Golden 逐条阅读正文重标：
-   - review 目录下分别保存 63、33、24 条记录；
-   - 不再共用一个通用 forbidden chunk；
-   - forbidden 为空时不进入 rejection rate 分母；
-   - relevant evidence 不得命中 excluded topics。
-5. 修复安全正文因出现“操控/强迫”等警告词而被误标为 `manipulation`：
-   - manipulation 只根据标题/heading 判定；
-   - PUA 风险文档 7/7 chunks 仍保留 manipulation topic。
-6. 发布真实 corpus `2026.07.5`：
-   - 40 documents；
-   - 380 chunks；
-   - 380 embeddings；
-   - `BAAI/bge-small-zh-v1.5`，512 维，L2 normalization。
-7. 将场景推荐方向作为 `recommended_action` 必填枚举写入 Scene Snapshot、live Gate 和 Trace。
-8. live runner 增加逐 case start/done 日志和原子 partial prediction checkpoint。
-
-## 3. CR 与验证证据
-
-已通过的独立 CR：
-
-- 真实 PostgreSQL repository、Trace、发布/回滚 CR：PASS；
-- live runner 无标签泄漏 CR：PASS；
-- Golden 逐条内容审阅：初次 BLOCK，修复后 PASS；
-- metadata 与 `07.4 -> 07.5` review 映射 CR：PASS；
-- `recommended_action` 与 Trace CR：初次发现缺 Trace 的 P1，修复后 PASS。
-
-本会话最后一轮相关测试：
+最新完整 120 Gate（已包含 lexical 真实加权，早于最新 planning meaning）：
 
 ```text
-tests.test_retrieval_service
-tests.test_postgres_repository
-tests.test_agent_integration
-tests.test_evaluation
-
-60 tests OK（连接真实 TEST_DATABASE_URL）
+Recall@20                  0.630952  BLOCK (>=0.90)
+nDCG@10                    0.190427  BLOCK (>=0.75)
+Boundary Recall            0.470588  BLOCK (=1.00)
+Forbidden Rejection        0.923077  BLOCK (>=0.95)
+No-Evidence Accuracy       1.000000  PASS
+Source Coverage            1.000000  PASS
+Trace Count/Completeness   120 / 1.0 PASS
 ```
 
-随后重新发布 `2026.07.5`，输出：
+相较前一轮，Recall 从 0.58929 提升到 0.63095，Boundary 从 0.41176 提升到
+0.47059，说明 lexical 修复有效；nDCG 基本不变，Scene planning 与 reranking 仍是主瓶颈。
+
+Trace 分层：
 
 ```text
-published_corpus=2026.07.5 chunks=380
+lexical top20   0.4479
+vector top20    0.5908
+fused top20     0.6310
+reranked        0.4062
+selected        0.2946
 ```
 
-其他已记录验证：
+## 当前外部阻塞
 
-- Golden/metadata 定向测试：28 tests OK；
-- action 相关定向测试：44 tests OK；
-- 独立 action CR：67 total，62 pass，5 个 DB tests 在 reviewer 环境跳过；主线已单独用真实 DB 跑过。
-
-## 4. 正在运行的 Gate 与暂停点
-
-真实 Gate 使用：
-
-- PostgreSQL/pgvector：`127.0.0.1:55432`；
-- corpus：`2026.07.5`；
-- 真实场景模型；
-- BGE embedding；
-- CrossEncoder reranker；
-- 逐条人工重标 Golden；
-- production `build_context -> analyze_scene_and_plan -> retrieve_evidence`。
-
-按用户要求暂停时，runner 已被明确停止：
+最新 planning meaning 改动后的 scene-only 120 评估在 69/120 时失败：
 
 ```text
-case_done=68/120 id=GD-08-05
-PID 37000 stopped at 2026-07-26 01:31:44 +08:00
-partial checkpoint bytes=158597
+HTTP 402 Payment Required
+https://api.deepseek.com/chat/completions
 ```
 
-日志：
+该轮没有完整 artifact，不能用于证明改善。此前仅 search-terms glossary 的完整
+scene-only 评估把 plan topic coverage 从 0.65556 提高到 0.70000，但 reciprocity
+退化，因此又补了 planning meanings；最终效果必须在额度恢复后重新完整验证。
 
-```text
-C:\Users\26561\AppData\Local\Temp\crushpilot-live-gate-075b-20260726-010017.out.log
-C:\Users\26561\AppData\Local\Temp\crushpilot-live-gate-075b-20260726-010017.err.log
+正式 runner 于 2026-07-27 00:30:21 +08:00 再次执行，第一个 case 即返回
+HTTP 402，因此仍没有发布 final/partial artifact。耐久记录：
+[`scene-plan-gate-failure-2026-07-26.md`](../../trellis/retrieval-system-refactor/scene-plan-gate-failure-2026-07-26.md)。
+
+## 必须保留的边界
+
+- 不得修改设计 Gate 阈值来换取通过。
+- 不得将 Golden expected/gold/required labels、case category、selector 或 chunk ID
+  注入 runtime。
+- 不得按 Golden case 添加路由或优先级。
+- 不得对主证据库运行会清表的 integration tests；使用 `crushpilot_test`。
+- 不得把 fused-vs-reranked 描述为 old-vs-new shadow。
+- ADR-013 未获用户/架构 owner 批准前不能生效。
+- 不得重新引入 JSON 索引、`str.count()`、完整 Markdown 路由或旧检索回滚。
+- `deploy/.env` 只保留本地，禁止输出或提交。
+- 先前暴露的 DeepSeek credential 必须由用户确认已经撤销/轮换；若未确认，更新本地
+  ignored `deploy/.env` 后才能最终 push。不得在文档中记录 key。
+
+## 恢复后的第一步
+
+1. 检查模型最小 JSON Schema 请求是否仍返回 402。
+2. 若额度恢复，重新运行正式 scene-only 120 planning eval；保存完整结果并比较
+   topic coverage/category regression。
+3. 规划改动有效后重跑完整 Golden 120 Gate。
+4. 继续按 scene plan → lexical/vector → RRF → rerank → Evidence Gate 分层修复，
+   每轮代码后独立 CR。
+5. Gate 全绿后生成 migration replay report，完成 Phase 12/13。
+6. 新开独立 subagent，完整读取设计文档逐条对照 code/runtime/artifact，循环到 PASS。
+
+## 验证命令
+
+```powershell
+Set-Location C:\Users\26561\Desktop\CrushPilot_Terra\backend
+$envFile = '..\deploy\.env'
+Get-Content -LiteralPath $envFile | ForEach-Object {
+  if ($_ -match '^\s*([^#][^=]*)=(.*)$') {
+    [Environment]::SetEnvironmentVariable(
+      $matches[1].Trim(), $matches[2].Trim().Trim('"'), 'Process'
+    )
+  }
+}
+$env:PYTHONPATH='.'
+$env:MODEL_TRUST_ENV='false'
+$env:HF_HUB_OFFLINE='1'
+$env:TRANSFORMERS_OFFLINE='1'
+
+py -m evaluation.run_scene_plan_gate `
+  --database-url 'postgresql://postgres:postgres@127.0.0.1:55432/postgres' `
+  --corpus-version '2026.07.6'
+
+py -m evaluation.run_live_gate `
+  --database-url 'postgresql://postgres:postgres@127.0.0.1:55432/postgres' `
+  --corpus-version '2026.07.6'
+
+# Gate 未过阈值时退出码为 1，但完整 results/predictions 仍应原子发布。
+$env:TEST_DATABASE_URL='postgresql://postgres:postgres@127.0.0.1:55432/crushpilot_test'
+py -m unittest discover -s tests -p 'test_*.py'
+
+Set-Location ..
+py scripts/verify_source_coverage.py
+py scripts/verify_corpus_version.py
+py scripts/verify_traceability.py
+py scripts/detect_legacy_retrieval_paths.py
 ```
 
-partial checkpoint：
+完成 `git add` 后扫描 Git index 的确切待提交快照。脚本只输出可疑路径，不输出
+匹配内容；明确的 placeholder 和环境变量引用不会误报：
 
-```text
-trellis/retrieval-system-refactor/live-gate-predictions.partial.json
+```powershell
+Set-Location C:\Users\26561\Desktop\CrushPilot_Terra
+py scripts/scan_staged_secrets.py
 ```
-
-旧的完整结果 `live-gate-results.json` 是修复前 Golden 的失败基线，不是当前发布证据。保留的明确基线：
-
-```text
-trellis/retrieval-system-refactor/live-gate-baseline-2026.07.4-pre-review.json
-```
-
-## 5. 未完成事项
-
-- 当前 `07.5` 真实 120 Gate 尚未完整结束；
-- 当前 runner 不支持从 partial checkpoint 恢复，暂停后需从头执行；
-- Gate 指标不通过时尚未进行按类别误差分析和实现修复；
-- `gate-report.md`、最终 traceability/status 尚未更新到最终真实结果；
-- 最后一次代码变更后的全量静态测试已运行，但完整 runtime Gate 与最终验收测试仍未完成；
-- 用户要求的最终审核尚未开始；最终必须新开独立 subagent，先读技术设计全文，再逐项对照代码和运行证据；
-- 最终审核发现问题后必须继续 CR/fix/loop，不能直接结束。
-
-## 6. 工作区注意事项
-
-- 不要运行 `git reset --hard` 或覆盖当前工作区；
-- integration tests 会清空指定测试数据库；若再次对 55432 运行，需要随后重新发布 corpus；
-- `.env` 含真实模型配置，禁止写入日志、文档或 Git；
-- `live-gate-predictions.json` 与 `live-gate-results.json` 当前仍是旧基线；只有新 runner 完整结束才会覆盖；
-- 不得重新引入 Golden label 到 runtime state，也不得按 Golden selector 给 corpus priority。
-
-## 7. 暂停前最后验证
-
-最后一次全量静态回归：
-
-```text
-Ran 119 tests in 19.021s
-OK (skipped=5)
-```
-
-5 个 skip 均为未给该进程设置 `TEST_DATABASE_URL` 的真实 PostgreSQL tests；同一轮代码此前已用 `127.0.0.1:55432` 跑过 60 项组合测试并通过。暂停时 `07.5` 已重新发布，未在重发布后再次运行会清库的 integration tests。

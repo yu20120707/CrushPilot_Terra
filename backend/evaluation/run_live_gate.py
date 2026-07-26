@@ -4,63 +4,92 @@ from __future__ import annotations
 
 import argparse
 import json
+import math
 import os
 from pathlib import Path
+from typing import Any
 
 import psycopg
 import yaml
 
 from evaluation.metrics import evaluate
+from evaluation.gate_support import (
+    DATASET,
+    TRELIS,
+    atomic_json,
+    build_runtime_state,
+    prepare_outputs,
+    publish_outputs,
+)
+from app.knowledge.governance.corpus_version import CURRENT_CORPUS_VERSION
 
 
-DATASET = Path(__file__).with_name("golden_dataset_v1.jsonl")
-ROOT = Path(__file__).parents[2]
-TRELIS = ROOT / "trellis" / "retrieval-system-refactor"
 DEFAULT_OUTPUT = TRELIS / "live-gate-results.json"
 DEFAULT_PREDICTIONS = TRELIS / "live-gate-predictions.json"
 
 
-def _source_coverage(expected_version: str) -> float:
+def _latency_summary(rows: list[dict[str, float]]) -> dict[str, dict[str, float]]:
+    summary = {}
+    for stage in sorted({stage for row in rows for stage in row}):
+        values = sorted(
+            float(row[stage])
+            for row in rows
+            if stage in row and row[stage] is not None
+        )
+        if not values:
+            continue
+
+        def percentile(fraction: float) -> float:
+            return values[
+                max(0, min(len(values) - 1, math.ceil(fraction * len(values)) - 1))
+            ]
+
+        summary[stage] = {
+            "p50": percentile(0.50),
+            "p95": percentile(0.95),
+        }
+    return summary
+
+
+def _source_coverage(expected_version: str, available_sources: set[str]) -> float:
     manifest = yaml.safe_load(
         (TRELIS / "source-manifest.yaml").read_text(encoding="utf-8")
     )
     if manifest.get("corpus_version") != expected_version:
         return 0
     required = [source for source in manifest["sources"] if source["required"]]
-    covered = [
-        source
-        for source in required
-        if source["status"] in {"ingested", "approved_excluded"}
-        and (
-            source["status"] == "approved_excluded"
-            or source["chunk_count"] > 0
+    covered = [source for source in required if (
+        source["status"] == "approved_excluded"
+        or (
+            source["status"] == "ingested"
+            and source["chunk_count"] > 0
+            and source["path"] in available_sources
         )
-    ]
+    )]
     return len(covered) / len(required) if required else 0
 
 
-def build_runtime_state(query: str, case_id: str) -> dict:
-    return {
-        "user_message": query,
-        "device_id": "00000000-0000-0000-0000-000000000001",
-        "conversation_id": f"golden-{case_id}",
-        "relationship_id": None,
-        "conversation_summary": None,
-        "relationship_facts": [],
-        "user_preferences": [],
-        "messages": [{"role": "user", "content": query}],
-    }
+def _trace_completeness(
+    expected_ids: list[str], found_count: int, complete_count: int
+) -> float:
+    expected_count = len(expected_ids)
+    if not expected_count or len(set(expected_ids)) != expected_count:
+        return 0
+    return complete_count / expected_count if found_count == expected_count else 0
 
 
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", required=True)
-    parser.add_argument("--corpus-version", default="2026.07.5")
+    parser.add_argument("--corpus-version", default=CURRENT_CORPUS_VERSION)
     parser.add_argument("--output", type=Path, default=DEFAULT_OUTPUT)
     parser.add_argument(
         "--predictions-output", type=Path, default=DEFAULT_PREDICTIONS
     )
     args = parser.parse_args()
+
+    partial_output = args.predictions_output.with_suffix(".partial.json")
+    prepare_outputs(args.output, args.predictions_output, partial_output)
 
     # Import after setting runtime configuration so this is the production path.
     os.environ["DEMO_MODE"] = "false"
@@ -121,13 +150,7 @@ def main() -> None:
                     and not chunks
                 ),
             }
-            partial_output = args.predictions_output.with_suffix(".partial.json")
-            partial_temp = partial_output.with_suffix(".tmp")
-            partial_temp.write_text(
-                json.dumps(predictions, ensure_ascii=False, indent=2),
-                encoding="utf-8",
-            )
-            partial_temp.replace(partial_output)
+            atomic_json(partial_output, predictions)
             if case["category"] in {"明确拒绝", "边界"}:
                 boundary_hits.append(
                     bool(set(case["gold_chunks"]) & set(retrieved[:20]))
@@ -150,16 +173,42 @@ def main() -> None:
                 (trace_ids,),
             )
             trace_count, complete_trace_count = cursor.fetchone()
+            cursor.execute(
+                """
+                SELECT latency_ms
+                FROM retrieval_traces
+                WHERE request_id = ANY(%s)
+                """,
+                (trace_ids,),
+            )
+            latency_rows = [row[0] for row in cursor.fetchall() if row[0]]
+            cursor.execute(
+                """
+                SELECT d.source_path
+                FROM knowledge_documents d
+                JOIN knowledge_chunks c
+                  ON c.document_id = d.id AND c.corpus_version = d.corpus_version
+                WHERE d.corpus_version = %s
+                  AND c.review_status = 'approved'
+                GROUP BY d.source_path
+                HAVING count(c.id) > 0
+                """,
+                (args.corpus_version,),
+            )
+            available_sources = {row[0] for row in cursor.fetchall()}
 
     results = evaluate(cases, predictions)
     results["boundary_key_knowledge_recall"] = (
         sum(boundary_hits) / len(boundary_hits)
     )
-    results["source_coverage"] = _source_coverage(args.corpus_version)
-    results["retrieval_trace_count"] = trace_count
-    results["retrieval_trace_completeness"] = (
-        complete_trace_count / trace_count if trace_count else 0
+    results["source_coverage"] = _source_coverage(
+        args.corpus_version, available_sources
     )
+    results["retrieval_trace_count"] = trace_count
+    results["retrieval_trace_completeness"] = _trace_completeness(
+        trace_ids, trace_count, complete_trace_count
+    )
+    results["stage_latency_ms"] = _latency_summary(latency_rows)
     results["release_gates"] = {
         "gold_evidence_recall_at_20": results["recall_at_20"] >= 0.90,
         "ndcg_at_10": results["ndcg_at_10"] >= 0.75,
@@ -175,15 +224,16 @@ def main() -> None:
             results["retrieval_trace_completeness"] == 1
         ),
     }
-    args.output.write_text(
-        json.dumps(results, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
-    )
-    args.predictions_output.write_text(
-        json.dumps(predictions, ensure_ascii=False, indent=2) + "\n",
-        encoding="utf-8",
+    publish_outputs(
+        args.output,
+        args.predictions_output,
+        partial_output,
+        results,
+        predictions,
     )
     print(json.dumps(results, ensure_ascii=False, indent=2))
+    if not all(results["release_gates"].values()):
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 {
-  "corpus_version": "2026.07.5",
+  "corpus_version": "2026.07.6",
   "embedding_model": "BAAI/bge-small-zh-v1.5",
   "embedding_dimension": 512,
   "embedding_normalization": "l2",
@@ -20,5 +20,15 @@
     "applicable_when": 0.0,
     "not_applicable_when": 0.9078947368421053,
     "action_labels": 0.35526315789473684
+  },
+  "metadata_suggestion_statuses": {
+    "accepted": 0,
+    "missing": 380,
+    "invalid": 0
+  },
+  "metadata_suggestion_ratios": {
+    "accepted": 0.0,
+    "missing": 1.0,
+    "invalid": 0.0
   }
 }

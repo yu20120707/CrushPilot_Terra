@@ -124,10 +124,12 @@ class ContextAndAssemblyTests(unittest.TestCase):
             "EVIDENCE ASSESSMENT",
             "SELECTED EVIDENCE CHUNKS",
             "CONVERSATION CONTEXT",
+            "USER CURRENT MESSAGE",
             "OUTPUT JSON SCHEMA / STREAMING CONTRACT",
         ]
         self.assertEqual([prompt.index(f"[{title}]") for title in titles], sorted(prompt.index(f"[{title}]") for title in titles))
-        self.assertEqual(prompt.count('"current_message": "怎么回"'), 1)
+        self.assertNotIn('"current_message"', prompt)
+        self.assertEqual(prompt.count("怎么回"), 1)
 
 
 if __name__ == "__main__":

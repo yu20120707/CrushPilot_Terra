@@ -149,7 +149,73 @@ class IngestionTests(unittest.TestCase):
             self.assertEqual(manifest, build.manifest)
             self.assertEqual(sum(counts.values()), len(build.chunks))
             self.assertEqual(report["chunk_count"], len(build.chunks))
+            self.assertEqual(
+                report["metadata_suggestion_statuses"]["missing"],
+                len(build.chunks),
+            )
+            self.assertEqual(
+                report["metadata_suggestion_ratios"]["missing"],
+                1.0,
+            )
             self.assertFalse(list(Path(directory).glob("*.tmp")))
+
+    def test_valid_offline_suggestion_is_used_and_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "knowledge").mkdir()
+            (root / "knowledge" / "one.md").write_text(
+                "# 普通标题\n\n普通内容。", encoding="utf-8"
+            )
+            suggestion = {
+                "knowledge_type": "source_note",
+                "topics": ["invitation"],
+                "action_labels": ["advance"],
+                "applicable_when": ["双方有继续了解意愿"],
+                "not_applicable_when": ["explicit_rejection"],
+            }
+            build = build_corpus(
+                "test",
+                root,
+                metadata_suggester=lambda *_: suggestion,
+            )
+            self.assertEqual(build.chunks[0].chunk.topics, ["invitation"])
+            self.assertEqual(
+                build.report.metadata_suggestion_statuses,
+                {"accepted": 1, "missing": 0, "invalid": 0},
+            )
+
+    def test_invalid_or_failed_offline_suggestion_falls_back_and_is_reported(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            (root / "knowledge").mkdir()
+            (root / "knowledge" / "one.md").write_text(
+                "# 普通标题\n\n普通内容。", encoding="utf-8"
+            )
+            invalid = build_corpus(
+                "invalid",
+                root,
+                metadata_suggester=lambda *_: {
+                    "knowledge_type": "strategy",
+                    "topics": ["not-controlled"],
+                    "action_labels": [],
+                    "applicable_when": [],
+                    "not_applicable_when": [],
+                },
+            )
+
+            def failed(*_):
+                raise RuntimeError("offline model unavailable")
+
+            failed_build = build_corpus("failed", root, metadata_suggester=failed)
+            for build in (invalid, failed_build):
+                self.assertEqual(
+                    build.chunks[0].chunk.topics,
+                    ["general_relationship_advice"],
+                )
+                self.assertEqual(
+                    build.report.metadata_suggestion_statuses,
+                    {"accepted": 0, "missing": 0, "invalid": 1},
+                )
 
     def test_required_empty_document_fails_build(self):
         with tempfile.TemporaryDirectory() as directory:

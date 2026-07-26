@@ -566,6 +566,7 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
                     "current_event_id": "b" * 64,
                     "user_goal_id": "c" * 64,
                     "active_skill_scenario_ids": ["boundary"],
+                    "current_event_sample": "受控调试样本",
                 },
                 "retrieval_plan": {
                     "query_ids": ["d" * 64],
@@ -573,6 +574,7 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
                     "excluded_topic_ids": ["manipulation"],
                     "hard_filter_ids": {"review_status": ["approved"]},
                     "soft_preference_ids": {},
+                    "query_samples": ["低压力回复"],
                 },
                 "evidence_assessment": {
                     "status": "sufficient",
@@ -611,7 +613,9 @@ class PostgreSQLIntegrationTests(unittest.TestCase):
         self.assertEqual(trace[1], "BAAI/bge-reranker-base")
         self.assertEqual(trace[2]["task_type_id"], "reply")
         self.assertEqual(trace[2]["recommended_action_id"], "respond")
+        self.assertEqual(trace[2]["current_event_sample"], "受控调试样本")
         self.assertEqual(trace[3]["required_topic_ids"], ["boundary"])
+        self.assertEqual(trace[3]["query_samples"], ["低压力回复"])
         self.assertEqual(trace[4], "generation_failed")
         self.assertEqual(float(trace[5]), 2.5)
         self.assertEqual(candidate, ("selected_chunks", chunk_id, 1, 0.9))

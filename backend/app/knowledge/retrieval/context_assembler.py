@@ -10,6 +10,28 @@ from app.knowledge.domain.models import (
 from app.knowledge.ingestion.chunker import token_count
 
 
+INTERNAL_EVIDENCE_FIELDS = {
+    "score",
+    "rrf_score",
+    "rerank_score",
+    "rank",
+    "lexical_rank",
+    "vector_rank",
+}
+
+
+def _without_internal_scores(value):
+    if isinstance(value, dict):
+        return {
+            key: _without_internal_scores(item)
+            for key, item in value.items()
+            if key not in INTERNAL_EVIDENCE_FIELDS
+        }
+    if isinstance(value, list):
+        return [_without_internal_scores(item) for item in value]
+    return value
+
+
 def _evidence_within_budget(evidence: list[dict], budget: int) -> list[dict]:
     ordered = sorted(
         evidence,
@@ -26,7 +48,7 @@ def _evidence_within_budget(evidence: list[dict], budget: int) -> list[dict]:
             for context in item.get("expanded_context", [])
         )
         if used + cost <= budget:
-            selected.append(item)
+            selected.append(_without_internal_scores(item))
             used += cost
     return selected
 
@@ -49,7 +71,11 @@ def assemble_prompt(
         ("SCENE SNAPSHOT", scene.model_dump()),
         ("EVIDENCE ASSESSMENT", assessment.model_dump()),
         ("SELECTED EVIDENCE CHUNKS", _evidence_within_budget(evidence, evidence_budget)),
-        ("CONVERSATION CONTEXT", context.model_dump(mode="json")),
+        (
+            "CONVERSATION CONTEXT",
+            context.model_dump(mode="json", exclude={"current_message"}),
+        ),
+        ("USER CURRENT MESSAGE", context.current_message),
         ("OUTPUT JSON SCHEMA / STREAMING CONTRACT", output_schema),
     ]
     return "\n\n".join(

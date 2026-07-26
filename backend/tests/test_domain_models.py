@@ -2,10 +2,21 @@ import unittest
 
 from pydantic import ValidationError
 
-from app.knowledge.domain.models import ConversationContext, RetrievalPlan
+from app.knowledge.domain.models import (
+    TOPIC_PLANNING_DESCRIPTIONS,
+    TOPIC_SEARCH_TERMS,
+    ConversationContext,
+    RetrievalPlan,
+)
 
 
 class DomainModelTests(unittest.TestCase):
+    def test_searchable_topics_have_planning_descriptions(self):
+        self.assertEqual(
+            set(TOPIC_PLANNING_DESCRIPTIONS),
+            set(TOPIC_SEARCH_TERMS),
+        )
+
     def test_retrieval_plan_allows_only_one_to_three_queries(self):
         values = {
             "required_topics": [],

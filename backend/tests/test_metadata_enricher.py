@@ -1,7 +1,10 @@
 import unittest
 
+from pydantic import ValidationError
+
 from app.knowledge.ingestion.metadata_enricher import (
     CONTROLLED_TOPICS,
+    SuggestedMetadata,
     suggest_metadata,
 )
 
@@ -62,6 +65,24 @@ class MetadataEnricherTests(unittest.TestCase):
             }
             <= CONTROLLED_TOPICS
         )
+
+    def test_offline_suggestion_schema_rejects_unknown_or_malformed_values(self):
+        valid = {
+            "knowledge_type": "strategy",
+            "topics": ["invitation"],
+            "action_labels": ["advance"],
+            "applicable_when": ["双方有继续了解意愿"],
+            "not_applicable_when": ["explicit_rejection"],
+        }
+        for invalid in (
+            {**valid, "unexpected": True},
+            {**valid, "topics": ["not-controlled"]},
+            {**valid, "action_labels": ["pressure"]},
+            {**valid, "applicable_when": "not-a-list"},
+            {**valid, "not_applicable_when": [""]},
+        ):
+            with self.subTest(invalid=invalid), self.assertRaises(ValidationError):
+                SuggestedMetadata.model_validate(invalid)
 
 
 if __name__ == "__main__":

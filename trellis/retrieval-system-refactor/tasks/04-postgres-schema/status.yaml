@@ -1,5 +1,5 @@
 task: 04-postgres-schema
-spec_ids: [SPEC-ADR-006]
+spec_ids: [SPEC-ADR-006, SPEC-CORPUS-002, SPEC-DB-001, SPEC-FAIL-002, SPEC-FAIL-003, SPEC-PUB-001, SPEC-PUB-002, SPEC-PUB-003, SPEC-PUB-004, SPEC-TEST-U-010, SPEC-TEST-002, SPEC-MIG-002, SPEC-DONE-009]
 status: completed
 evidence:
   - backend/app/db/schema.py

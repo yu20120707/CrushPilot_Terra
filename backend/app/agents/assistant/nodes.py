@@ -7,6 +7,7 @@ from typing import Any, Callable
 from uuid import uuid4
 
 from app.knowledge.domain.models import (
+    CONTROLLED_TOPICS,
     ConfirmedFact,
     ConversationContext,
     ConversationMessage,
@@ -26,6 +27,12 @@ from .schemas import ChatResult, ChatState
 
 INPUT_UNSAFE_PATTERN = re.compile(
     r"跟踪|尾随|蹲守|威胁|恐吓|强迫|逼迫|纠缠|骚扰|未成年|诈骗|冒充|灌醉|下药|偷拍"
+)
+MISSING_CONTEXT_PATTERN = re.compile(
+    r"没有前文|(?:没有|未)提供原话|没有具体行为|"
+    r"缺少(?:双方)?关系阶段|没有描述(?:具体)?冲突|"
+    r"不知道(?:已经)?过去多久|不知道拒绝(?:了)?什么|"
+    r"(?:没有|未)提供对方消息"
 )
 DANGEROUS_ADVICE_PATTERN = re.compile(
     r"跟踪|尾随|蹲守|威胁|恐吓|强迫|逼迫|纠缠|骚扰|诈骗|冒充|灌醉|下药|偷拍"
@@ -70,6 +77,39 @@ def validate_result(result: ChatResult, intent: str) -> ChatResult:
     ):
         return safe_result(intent)
     return result.model_copy(update={"intent": intent})
+
+
+def _normalize_fact(value: str) -> str:
+    return re.sub(r"[\W_]+", "", value).casefold()
+
+
+def _enforce_known_fact_provenance(
+    plan: SceneAndRetrievalPlan, context: ConversationContext
+) -> None:
+    sources = [
+        context.current_message,
+        *(message.content for message in context.recent_messages),
+        context.conversation_summary or "",
+        *(fact.content for fact in context.relationship_facts),
+        *(fact.content for fact in context.user_preferences),
+    ]
+    normalized_sources = [
+        normalized for source in sources if (normalized := _normalize_fact(source))
+    ]
+    traceable: list[str] = []
+    unverified: list[str] = []
+    for fact in plan.scene.known_facts:
+        normalized = _normalize_fact(fact)
+        target = (
+            traceable
+            if normalized and any(normalized in source for source in normalized_sources)
+            else unverified
+        )
+        target.append(fact)
+    plan.scene.known_facts = list(dict.fromkeys(traceable))
+    plan.scene.key_unknowns = list(
+        dict.fromkeys([*plan.scene.key_unknowns, *unverified])
+    )
 
 
 class AssistantNodes:
@@ -134,13 +174,25 @@ class AssistantNodes:
                 self.metrics.observe(
                     "scene_analysis_latency_ms", (perf_counter() - started) * 1000
                 )
+            _enforce_known_fact_provenance(plan, context)
             active = [
                 scene_id
                 for scene_id in plan.scene.active_skill_scenarios
                 if scene_id in skill.scene_policies
             ]
+            if "explicit_rejection" in active:
+                plan.scene.task_type = "boundary"
+                plan.scene.recommended_action = "stop"
+            elif MISSING_CONTEXT_PATTERN.search(context.current_message):
+                active = ["insufficient_information"]
+                plan.scene.task_type = "general_advice"
+                plan.scene.recommended_action = "clarify"
+                plan.retrieval.required_topics = []
+                plan.retrieval.excluded_topics = []
             required = list(plan.retrieval.required_topics)
             excluded = list(plan.retrieval.excluded_topics)
+            required = [topic for topic in required if topic in CONTROLLED_TOPICS]
+            excluded = [topic for topic in excluded if topic in CONTROLLED_TOPICS]
             for scene_id in active:
                 policy = skill.scene_policies[scene_id]
                 required.extend(policy.get("required_topics", []))

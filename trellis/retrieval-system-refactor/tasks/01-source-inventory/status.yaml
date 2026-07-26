@@ -1,5 +1,5 @@
 task: 01-source-inventory
-spec_ids: [SPEC-ADR-012, SPEC-TR-001]
+spec_ids: [SPEC-ADR-012, SPEC-CORPUS-001, SPEC-PUB-001, SPEC-TR-001, SPEC-TEST-U-009, SPEC-MIG-001, SPEC-DONE-001]
 status: completed
 evidence:
   - trellis/retrieval-system-refactor/source-manifest.yaml

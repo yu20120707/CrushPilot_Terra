@@ -22,13 +22,14 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD}
       DEMO_MODE: "false"
       MODEL_PROVIDER: ${MODEL_PROVIDER:-deepseek}
-      CORPUS_VERSION: ${CORPUS_VERSION:-2026.07.5}
+      CORPUS_VERSION: ${CORPUS_VERSION:-2026.07.6}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
       EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-512}
       EMBEDDING_NORMALIZATION: ${EMBEDDING_NORMALIZATION:-l2}
       TOKENIZER_VERSION: ${TOKENIZER_VERSION:-jieba-0.42}
       CHUNKER_VERSION: ${CHUNKER_VERSION:-heading-semantic-v1}
       ALLOW_LEXICAL_ONLY_STARTUP: ${ALLOW_LEXICAL_ONLY_STARTUP:-false}
+      TRACE_DEBUG: ${TRACE_DEBUG:-false}
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL}
@@ -58,7 +59,7 @@ services:
       - --database-url
       - postgresql://crushpilot@postgres:5432/crushpilot?sslmode=disable
       - --version
-      - ${CORPUS_VERSION:-2026.07.5}
+      - ${CORPUS_VERSION:-2026.07.6}
       - --embedding-model
       - ${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
       - --artifacts

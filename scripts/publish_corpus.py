@@ -10,7 +10,8 @@ sys.path.insert(0, str(ROOT / "backend"))
 
 from app.db.schema import apply_schema
 from app.knowledge.ingestion import build_corpus, write_build_artifacts
-from app.knowledge.governance.corpus_version import CorpusVersion
+from app.knowledge.governance.corpus_version import CURRENT_CORPUS_VERSION, CorpusVersion
+from app.knowledge.domain.models import topic_search_text
 from app.knowledge.repositories.postgres import PostgresKnowledgeRepository
 from app.knowledge.repositories.publisher import CorpusPublisher
 from app.knowledge.retrieval.tokenizer import tokenize
@@ -39,10 +40,21 @@ def search_tokens(build) -> dict[str, dict[str, str]]:
     return result
 
 
+def embedding_text(chunk) -> str:
+    return "\n".join(
+        (
+            chunk.title,
+            " / ".join(chunk.heading_path),
+            topic_search_text(chunk.topics),
+            chunk.content,
+        )
+    )
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--database-url", default=os.getenv("DATABASE_URL"))
-    parser.add_argument("--version", default="2026.07.5")
+    parser.add_argument("--version", default=CURRENT_CORPUS_VERSION)
     parser.add_argument("--embedding-model", default="BAAI/bge-small-zh-v1.5")
     parser.add_argument(
         "--artifacts",
@@ -65,7 +77,7 @@ def main() -> None:
     )
     write_build_artifacts(build, args.artifacts)
     vectors = model.encode(
-        [record.chunk.content for record in build.chunks],
+        [embedding_text(record.chunk) for record in build.chunks],
         normalize_embeddings=True,
     )
     embeddings = {

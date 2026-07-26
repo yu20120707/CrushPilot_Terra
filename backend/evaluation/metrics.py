@@ -25,6 +25,7 @@ def evaluate(cases: Iterable[Mapping[str, Any]], predictions: Mapping[str, Mappi
     reranker_pairs = []
     evidence_detection = {False: [], True: []}
     context_results = []
+    action_results = []
     for case in cases:
         prediction = predictions.get(str(case["id"]), {})
         ranked = list(prediction.get("ranked_chunks", ()))
@@ -44,6 +45,13 @@ def evaluate(cases: Iterable[Mapping[str, Any]], predictions: Mapping[str, Mappi
         if expected_no_evidence:
             detection_correct = detection_correct and not ranked
         evidence_detection[expected_no_evidence].append(float(detection_correct))
+        if "expected_action_direction" in case:
+            action_results.append(
+                float(
+                    prediction.get("action_direction")
+                    == case["expected_action_direction"]
+                )
+            )
         if case.get("category") == "Hard Negative":
             context_results.append(
                 bool(
@@ -100,6 +108,9 @@ def evaluate(cases: Iterable[Mapping[str, Any]], predictions: Mapping[str, Mappi
         "ndcg_at_10": mean("ndcg"),
         "required_topic_coverage": mean("topics"),
         "task_type_accuracy": mean("task_type"),
+        "action_direction_accuracy": (
+            sum(action_results) / len(action_results) if action_results else None
+        ),
         "forbidden_chunk_rejection_rate": mean("forbidden"),
         "forbidden_annotated_case_count": sum(
             row["forbidden"] is not None for row in rows

@@ -10,6 +10,7 @@ BACKEND = Path(__file__).parents[1]
 sys.path.insert(0, str(BACKEND))
 
 from app.knowledge.ingestion import build_corpus
+from app.knowledge.governance.corpus_version import CURRENT_CORPUS_VERSION
 from app.knowledge.ingestion.metadata_enricher import (
     CONTROLLED_TOPICS,
     PLANNING_ONLY_TOPICS,
@@ -35,7 +36,6 @@ REVIEWED_FIELDS = {
     "expected_action_direction",
 }
 REVIEW_CORPUS_VERSION = "2026.07.4"
-CURRENT_CORPUS_VERSION = "2026.07.5"
 
 
 def _review_chunk_id_map() -> dict[str, str]:

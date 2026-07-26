@@ -1,46 +1,70 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from typing import Literal
+
+from app.knowledge.domain.models import (
+    CONTROLLED_TOPICS,
+    PLANNING_ONLY_TOPICS,
+    TOPIC_SEARCH_TERMS,
+)
+from pydantic import BaseModel, ConfigDict, field_validator
 
 
-@dataclass(frozen=True)
-class SuggestedMetadata:
-    knowledge_type: str
+ACTION_LABELS = {
+    "respond",
+    "support",
+    "advance",
+    "observe",
+    "reduce_pressure",
+    "clarify",
+    "repair",
+    "stop",
+    "exit",
+    "safety_exit",
+}
+
+
+class SuggestedMetadata(BaseModel):
+    model_config = ConfigDict(extra="forbid", strict=True)
+
+    knowledge_type: Literal[
+        "hard_rule",
+        "principle",
+        "strategy",
+        "example",
+        "counterexample",
+        "source_note",
+    ]
     topics: list[str]
     action_labels: list[str]
     applicable_when: list[str]
     not_applicable_when: list[str]
 
+    @field_validator("topics")
+    @classmethod
+    def validate_topics(cls, values: list[str]) -> list[str]:
+        if any(value not in CONTROLLED_TOPICS for value in values):
+            raise ValueError("topics must use controlled topic ids")
+        return cls.validate_string_list(values)
 
-TOPIC_RULES = {
-    "rejection": ("拒绝", "婉拒", "不见面"),
-    "boundary": ("边界", "同意", "越界", "施压"),
-    "reduce_pressure": (
-        "降压", "留空间", "不施压", "降低压力", "只回", "不追问", "收尾"
-    ),
-    "emotional_support": ("情绪", "安慰", "倾听", "共情", "情绪价值"),
-    "low_pressure_communication": ("松弛", "低压力", "自然沟通"),
-    "invitation": ("邀约", "约会", "见面"),
-    "conflict_repair": ("冲突", "吵架", "修复", "道歉"),
-    "relationship_exit": ("分手", "退出", "背叛"),
-    "reciprocity": ("互惠", "投入", "失衡"),
-    "digital_context": ("延迟回复", "晚回", "文字沟通", "数字边界", "线上互动"),
-    "manipulation": ("操控", "pua", "欺骗", "强迫"),
-}
+    @field_validator("action_labels")
+    @classmethod
+    def validate_actions(cls, values: list[str]) -> list[str]:
+        if any(value not in ACTION_LABELS for value in values):
+            raise ValueError("action_labels must use controlled action ids")
+        return cls.validate_string_list(values)
 
-PLANNING_ONLY_TOPICS = {
-    "aggressive_pursuit",
-    "conservative_action",
-    "forced_disclosure",
-    "mind_reading",
-    "relationship_escalation",
-    "uncertainty",
-}
-CONTROLLED_TOPICS = (
-    frozenset(TOPIC_RULES)
-    | PLANNING_ONLY_TOPICS
-    | {"general_relationship_advice"}
-)
+    @field_validator("applicable_when", "not_applicable_when")
+    @classmethod
+    def validate_string_list(cls, values: list[str]) -> list[str]:
+        if any(not value.strip() for value in values):
+            raise ValueError("metadata lists cannot contain blank values")
+        if len(values) != len(set(values)):
+            raise ValueError("metadata lists cannot contain duplicates")
+        return values
+
+
+TOPIC_RULES = TOPIC_SEARCH_TERMS
 
 
 def suggest_metadata(title: str, heading_path: list[str], content: str) -> SuggestedMetadata:

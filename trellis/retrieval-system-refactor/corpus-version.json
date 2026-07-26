@@ -1,5 +1,5 @@
 {
-  "corpus_version": "2026.07.1",
+  "corpus_version": "2026.07.6",
   "embedding_model": "BAAI/bge-small-zh-v1.5",
   "embedding_dimension": 512,
   "embedding_normalization": "l2",

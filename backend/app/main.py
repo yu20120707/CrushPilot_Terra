@@ -22,7 +22,7 @@ from .agents.assistant.nodes import AssistantNodes, contains_unsafe_advice, safe
 from .agents.assistant.prompts import SAFETY_PROMPT
 from .agents.assistant.schemas import ChatResult
 from .knowledge.domain.models import EvidenceAssessment, RetrievalTrace
-from .knowledge.governance.corpus_version import CorpusVersion
+from .knowledge.governance.corpus_version import CURRENT_CORPUS_VERSION, CorpusVersion
 from .knowledge.observability.metrics import RetrievalMetrics
 from .knowledge.repositories.postgres import PostgresKnowledgeRepository
 from .knowledge.retrieval.lexical_retriever import LexicalRetriever
@@ -43,9 +43,11 @@ _PROVIDER_PREFIX = {"deepseek": "DEEPSEEK", "longxia": "LONGXIA"}.get(MODEL_PROV
 MODEL_BASE_URL = os.getenv(f"{_PROVIDER_PREFIX}_BASE_URL", os.getenv("MODEL_BASE_URL", "")).rstrip("/")
 MODEL_API_KEY = os.getenv(f"{_PROVIDER_PREFIX}_API_KEY", os.getenv("MODEL_API_KEY", ""))
 MODEL_NAME = os.getenv(f"{_PROVIDER_PREFIX}_MODEL", os.getenv("MODEL_NAME", ""))
+MODEL_TRUST_ENV = os.getenv("MODEL_TRUST_ENV", "true").lower() == "true"
+TRACE_DEBUG = os.getenv("TRACE_DEBUG", "false").lower() == "true"
 EMBEDDING_MODEL = os.getenv("EMBEDDING_MODEL", "BAAI/bge-small-zh-v1.5")
 RERANKER_MODEL = os.getenv("RERANKER_MODEL", "BAAI/bge-reranker-base")
-CORPUS_VERSION = os.getenv("CORPUS_VERSION", "2026.07.5")
+CORPUS_VERSION = os.getenv("CORPUS_VERSION", CURRENT_CORPUS_VERSION)
 ALLOW_LEXICAL_ONLY = (
     os.getenv("ALLOW_LEXICAL_ONLY_STARTUP", "false").lower() == "true"
 )
@@ -87,6 +89,7 @@ def call_json(system: str, user: str, schema: type[BaseModel]) -> BaseModel:
                 headers={"Authorization": f"Bearer {MODEL_API_KEY}"},
                 json=model_payload(system, user),
                 timeout=httpx.Timeout(25, connect=5),
+                trust_env=MODEL_TRUST_ENV,
             )
             response.raise_for_status()
             return schema.model_validate_json(response.json()["choices"][0]["message"]["content"])
@@ -229,6 +232,7 @@ def _production_dependencies() -> tuple[object, object, ThreadStore]:
         trace_writer=repository,
         metrics=metrics,
         context_loader=repository,
+        trace_debug=TRACE_DEBUG,
     )
     from langgraph.checkpoint.postgres import PostgresSaver
 

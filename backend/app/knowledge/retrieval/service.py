@@ -11,9 +11,11 @@ from app.knowledge.domain.models import (
     RetrievalPlan,
     RetrievalTrace,
     SceneSnapshot,
+    topic_search_text,
 )
 from app.knowledge.ingestion.chunker import token_count
 from app.knowledge.observability.metrics import RetrievalMetrics
+from app.knowledge.observability.retrieval_trace import controlled_debug_sample
 
 from .diversity import select_diverse
 from .evidence_gate import assess_evidence
@@ -46,6 +48,7 @@ class RetrievalService:
         context_loader: object | None = None,
         evidence_budget: int = 3500,
         reranker_threshold: float | None = None,
+        trace_debug: bool = False,
     ):
         self.lexical = lexical_retriever
         self.vector = vector_retriever
@@ -55,6 +58,7 @@ class RetrievalService:
         self.context_loader = context_loader
         self.evidence_budget = evidence_budget
         self.reranker_threshold = reranker_threshold
+        self.trace_debug = trace_debug
 
     def retrieve(
         self,
@@ -91,7 +95,7 @@ class RetrievalService:
             for query in plan.queries:
                 vector.append(
                     self.vector.search(
-                        query,
+                        f"{query}\n{topic_search_text(plan.required_topics)}".strip(),
                         limit=min(plan.vector_top_k, 20),
                         hard_filters=plan.hard_filters,
                     )[
@@ -204,8 +208,8 @@ class RetrievalService:
             corpus_version=corpus_version,
             embedding_model=embedding_model,
             reranker_model=getattr(self.reranker, "model_name", None),
-            scene_snapshot=_trace_scene(scene),
-            retrieval_plan=_trace_plan(plan),
+            scene_snapshot=_trace_scene(scene, debug=self.trace_debug),
+            retrieval_plan=_trace_plan(plan, debug=self.trace_debug),
             lexical_candidates=_trace_candidates(_flatten(lexical), "score"),
             vector_candidates=_trace_candidates(_flatten(vector), "score"),
             fused_candidates=_trace_candidates(fused, "rrf_score"),
@@ -273,8 +277,8 @@ def _hash(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
-def _trace_scene(scene: SceneSnapshot) -> dict[str, Any]:
-    return {
+def _trace_scene(scene: SceneSnapshot, *, debug: bool = False) -> dict[str, Any]:
+    snapshot = {
         "task_type_id": scene.task_type,
         "recommended_action_id": scene.recommended_action,
         "relationship_stage_id": scene.relationship_stage,
@@ -282,16 +286,24 @@ def _trace_scene(scene: SceneSnapshot) -> dict[str, Any]:
         "user_goal_id": _hash(scene.user_goal),
         "active_skill_scenario_ids": scene.active_skill_scenarios,
     }
+    if debug:
+        snapshot["current_event_sample"] = controlled_debug_sample(scene.current_event)
+    return snapshot
 
 
-def _trace_plan(plan: RetrievalPlan) -> dict[str, Any]:
-    return {
+def _trace_plan(plan: RetrievalPlan, *, debug: bool = False) -> dict[str, Any]:
+    snapshot = {
         "query_ids": [_hash(query) for query in plan.queries],
         "required_topic_ids": plan.required_topics,
         "excluded_topic_ids": plan.excluded_topics,
         "hard_filter_ids": plan.hard_filters,
         "soft_preference_ids": plan.soft_preferences,
     }
+    if debug:
+        snapshot["query_samples"] = [
+            controlled_debug_sample(query) for query in plan.queries
+        ]
+    return snapshot
 
 
 def _trace_candidates(candidates: list[dict], original_score: str) -> list[dict]:

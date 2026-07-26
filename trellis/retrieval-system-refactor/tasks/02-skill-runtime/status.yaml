@@ -1,5 +1,5 @@
 task: 02-skill-runtime
-spec_ids: [SPEC-ADR-001, SPEC-ADR-002, SPEC-ADR-003]
+spec_ids: [SPEC-ADR-001, SPEC-ADR-002, SPEC-ADR-003, SPEC-SKILL-001, SPEC-SKILL-002, SPEC-PROMPT-BAN-002, SPEC-FAIL-001, SPEC-TEST-U-001, SPEC-MIG-001, SPEC-DONE-002]
 status: completed
 evidence:
   - backend/app/agents/assistant/resources/goutoujunshi_skill/skill.yaml

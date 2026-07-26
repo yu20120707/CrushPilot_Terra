@@ -1,3 +1,4 @@
+import json
 import os
 import unittest
 from pathlib import Path
@@ -9,9 +10,13 @@ os.environ["DEMO_MODE"] = "true"
 from langgraph.checkpoint.memory import InMemorySaver
 
 from app.agents.assistant.graph import build_assistant_graph
-from app.agents.assistant.nodes import AssistantNodes
+from app.agents.assistant.nodes import AssistantNodes, MISSING_CONTEXT_PATTERN
+from app.agents.assistant.prompts import scene_plan_prompt
 from app.agents.assistant.schemas import ChatResult
 from app.knowledge.domain.models import (
+    TOPIC_PLANNING_DESCRIPTIONS,
+    TOPIC_SEARCH_TERMS,
+    ConversationContext,
     EvidenceAssessment,
     RetrievalPlan,
     RetrievalTrace,
@@ -105,6 +110,27 @@ class FakeRetrieval:
 
 
 class AgentIntegrationTests(unittest.TestCase):
+    def test_scene_prompt_explains_controlled_topic_ids(self):
+        runtime = SkillRuntime(SKILL_DIR).load()
+        prompt = scene_plan_prompt(
+            ConversationContext(current_message="对方第二天才回", recent_messages=[]),
+            runtime.view([]),
+        )
+
+        glossary = json.loads(
+            prompt.split("[TOPIC GLOSSARY]\n", 1)[1].split(
+                "\n\n[CONVERSATION CONTEXT]", 1
+            )[0]
+        )
+        self.assertEqual(set(glossary), set(TOPIC_SEARCH_TERMS))
+        self.assertEqual(
+            glossary["digital_context"],
+            {
+                "meaning": TOPIC_PLANNING_DESCRIPTIONS["digital_context"],
+                "search_terms": list(TOPIC_SEARCH_TERMS["digital_context"]),
+            },
+        )
+
     def make_graph(self, call_json, trace_writer=None):
         runtime = SkillRuntime(SKILL_DIR).load()
         nodes = AssistantNodes(
@@ -128,6 +154,8 @@ class AgentIntegrationTests(unittest.TestCase):
             "review_status": ["draft"],
             "knowledge_type": [],
         }
+        model_plan.retrieval.required_topics = ["emotional_support", "free text"]
+        model_plan.retrieval.excluded_topics = ["manipulation", "未知标签"]
         nodes = AssistantNodes(
             skill_runtime=runtime,
             retrieval_service=retrieval,
@@ -153,6 +181,102 @@ class AgentIntegrationTests(unittest.TestCase):
                 "review_status": ["approved"],
             },
         )
+        self.assertEqual(
+            retrieval.calls[0]["plan"].required_topics,
+            ["emotional_support"],
+        )
+        self.assertEqual(
+            retrieval.calls[0]["plan"].excluded_topics,
+            ["manipulation"],
+        )
+
+    def test_known_facts_require_input_provenance(self):
+        runtime = SkillRuntime(SKILL_DIR).load()
+        model_plan = plan()
+        model_plan.scene.known_facts = [
+            "对方说今天很累",
+            "对方说今天很累并答应周末见面",
+            "对方已经答应周末见面",
+        ]
+        nodes = AssistantNodes(
+            skill_runtime=runtime,
+            retrieval_service=FakeRetrieval(),
+            call_json=Mock(return_value=model_plan),
+            metrics=RetrievalMetrics(),
+            corpus_version="test-v1",
+            embedding_model="embed-test",
+        )
+        state = {
+            "user_message": "我该怎么回？",
+            "conversation_id": "known-fact-provenance",
+            "messages": [
+                {"role": "counterpart", "content": "对方说：今天很累。"},
+                {"role": "user", "content": "我该怎么回？"},
+            ],
+        }
+        state.update(nodes.build_context(state))
+
+        scene = nodes.analyze_scene_and_plan(state)["scene_and_retrieval_plan"]["scene"]
+
+        self.assertEqual(scene["known_facts"], ["对方说今天很累"])
+        self.assertIn(
+            "对方说今天很累并答应周末见面",
+            scene["key_unknowns"],
+        )
+        self.assertIn("对方已经答应周末见面", scene["key_unknowns"])
+
+    def test_missing_context_and_explicit_rejection_are_normalized(self):
+        runtime = SkillRuntime(SKILL_DIR).load()
+        for message, active, expected in (
+            (
+                "只看到一个表情，缺少双方关系阶段。",
+                [],
+                ("general_advice", "clarify", ["insufficient_information"]),
+            ),
+            (
+                "对方明确拒绝我了，我不知道怎么回复。",
+                ["explicit_rejection"],
+                ("boundary", "stop", ["explicit_rejection"]),
+            ),
+        ):
+            retrieval = FakeRetrieval()
+            model_plan = plan()
+            model_plan.scene.active_skill_scenarios = active
+            nodes = AssistantNodes(
+                skill_runtime=runtime,
+                retrieval_service=retrieval,
+                call_json=Mock(return_value=model_plan),
+                metrics=RetrievalMetrics(),
+                corpus_version="test-v1",
+                embedding_model="embed-test",
+            )
+            state = {
+                "user_message": message,
+                "conversation_id": "normalize-scene",
+                "messages": [{"role": "user", "content": message}],
+            }
+            state.update(nodes.build_context(state))
+            output = nodes.analyze_scene_and_plan(state)[
+                "scene_and_retrieval_plan"
+            ]
+            self.assertEqual(
+                (
+                    output["scene"]["task_type"],
+                    output["scene"]["recommended_action"],
+                    output["scene"]["active_skill_scenarios"],
+                ),
+                expected,
+            )
+
+        for message in (
+            "不知道怎么安慰她，她说考试失败了。",
+            "对方只说最近忙，下次吧。",
+            "对方只问我周末有空吗。",
+            "我们没有冲突，关系很好，我想约她周末喝咖啡。",
+            "她发了晚安，不知道对方消息该怎么回。",
+            "我不知道多久才能走出分手，但经过和边界都说清楚了。",
+        ):
+            self.assertIsNone(MISSING_CONTEXT_PATTERN.search(message))
 
     def test_normal_path_uses_exactly_two_llm_calls_and_selected_chunks_only(self):
         result = ChatResult(
@@ -176,6 +300,9 @@ class AgentIntegrationTests(unittest.TestCase):
         self.assertIn('"scene"', scene_prompt)
         self.assertIn('"retrieval"', scene_prompt)
         self.assertIn("顶层字段必须严格为 scene 和 retrieval", scene_prompt)
+        self.assertIn("primary query 优先贴近用户原话", scene_prompt)
+        self.assertIn("只有出现明确拒绝时才选 explicit_rejection", scene_prompt)
+        self.assertIn("此时 action 选 clarify", scene_prompt)
         final_prompt = model.call_args_list[1].args[1]
         self.assertIn("selected-1", final_prompt)
         self.assertNotIn("SKILL.md", final_prompt)

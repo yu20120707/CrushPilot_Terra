@@ -28,6 +28,7 @@ _LATENCY_KEYS = {
     "retrieval_failure_latency_ms",
     "generation_latency_ms",
 }
+_DEBUG_SAMPLE_MAX_LENGTH = 200
 
 
 def _safe_token(value: Any) -> str | None:
@@ -81,6 +82,12 @@ def _safe_token_list(value: Any) -> list[str]:
     return [safe for item in value if (safe := _safe_token(item)) is not None]
 
 
+def _safe_debug_sample(value: Any) -> str | None:
+    if not isinstance(value, str) or len(value) > _DEBUG_SAMPLE_MAX_LENGTH:
+        return None
+    return value if all(character >= " " or character in "\t\n" for character in value) else None
+
+
 def _minimize_scene(value: Any) -> dict[str, Any]:
     if not isinstance(value, dict):
         return {}
@@ -98,6 +105,9 @@ def _minimize_scene(value: Any) -> dict[str, Any]:
     scenarios = _safe_token_list(value.get("active_skill_scenario_ids"))
     if scenarios:
         result["active_skill_scenario_ids"] = scenarios
+    sample = _safe_debug_sample(value.get("current_event_sample"))
+    if sample is not None:
+        result["current_event_sample"] = sample
     return result
 
 
@@ -126,6 +136,13 @@ def _minimize_plan(value: Any) -> dict[str, Any]:
             and (safe_values := _safe_token_list(item))
             for key in [safe_key]
         }
+    samples = value.get("query_samples")
+    if isinstance(samples, list):
+        safe_samples = [
+            safe for item in samples if (safe := _safe_debug_sample(item)) is not None
+        ]
+        if safe_samples:
+            result["query_samples"] = safe_samples
     return result
 
 

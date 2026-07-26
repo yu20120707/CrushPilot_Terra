@@ -10,6 +10,7 @@ from app.knowledge.retrieval.metadata_enricher import (
 from app.knowledge.retrieval.reranker import RerankerUnavailable
 from app.knowledge.retrieval.service import RetrievalService, _fit_budget
 from app.knowledge.retrieval.vector_retriever import VectorRetriever, VectorUnavailable
+from app.knowledge.retrieval.tokenizer import build_topic_tokens
 
 
 def chunk(chunk_id, *, topic="boundary", content=None, document_id=None):
@@ -33,7 +34,7 @@ class FakeRetriever:
 
     def search(self, query, *args, hard_filters=None, **kwargs):
         self.calls.append((query, kwargs["limit"]))
-        value = self.values[query]
+        value = self.values[query.splitlines()[0]]
         if isinstance(value, Exception):
             raise value
         return value
@@ -42,7 +43,7 @@ class FakeRetriever:
 class FilteringRetriever(FakeRetriever):
     def search(self, query, *args, hard_filters, **kwargs):
         self.calls.append((query, hard_filters))
-        return self.values[query]
+        return self.values[query.splitlines()[0]]
 
 
 class FakeReranker:
@@ -185,7 +186,13 @@ class RetrievalServiceTests(unittest.TestCase):
         }
         result, lexical, vector, reranker, writer = self.run_service(values, values)
         self.assertEqual(lexical, [("primary", 20), ("secondary", 20)])
-        self.assertEqual(vector, [("primary", 20), ("secondary", 20)])
+        self.assertEqual(
+            vector,
+            [
+                ("primary\n边界 同意 越界 施压", 20),
+                ("secondary\n边界 同意 越界 施压", 20),
+            ],
+        )
         self.assertEqual(reranker, [("rerank", 15)])
         self.assertLessEqual(len(result.chunks), 6)
         self.assertEqual(result.assessment.status, "sufficient")
@@ -455,8 +462,46 @@ class RetrievalServiceTests(unittest.TestCase):
         )
         self.assertNotIn("primary", str(result.trace.retrieval_plan.values()))
 
+    def test_trace_debug_explicitly_includes_controlled_samples(self):
+        debug_scene = scene().model_copy(
+            update={"current_event": "联系我 13812345678 或 a@example.com " + "很" * 300}
+        )
+        values = {"primary": [chunk("safe")], "secondary": []}
+        service = RetrievalService(
+            FakeRetriever(values, []),
+            FakeRetriever(values, []),
+            FakeReranker([]),
+            trace_debug=True,
+        )
+
+        result = service.retrieve(
+            request_id="trace-debug",
+            conversation_id="conversation",
+            skill_version="skill",
+            skill_sha256="sha",
+            corpus_version="corpus",
+            scene=debug_scene,
+            plan=plan(),
+        )
+
+        sample = result.trace.scene_snapshot["current_event_sample"]
+        self.assertIn("[phone]", sample)
+        self.assertIn("[email]", sample)
+        self.assertNotIn("13812345678", sample)
+        self.assertLessEqual(len(sample), 200)
+        self.assertEqual(
+            result.trace.retrieval_plan["query_samples"],
+            ["primary", "secondary"],
+        )
+
 
 class LexicalRetrieverTests(unittest.TestCase):
+    def test_required_topics_expand_to_shared_chinese_search_terms(self):
+        tokens = build_topic_tokens(["reduce_pressure"])
+        self.assertIn("降压", tokens)
+        self.assertIn("留", tokens)
+        self.assertIn("reduce", tokens)
+
     def test_query_tokens_are_or_joined_and_quote_escaped(self):
         self.assertEqual(
             _or_tsquery(["边界", "don't", "边界"]),
@@ -474,10 +519,12 @@ class LexicalRetrieverTests(unittest.TestCase):
         )
 
         _, params = connection.fake_cursor.executed[0]
+        sql, params = connection.fake_cursor.executed[0]
+        self.assertIn("1.5 * ts_rank_cd(c.search_vector, tq.query, 2)", sql)
         self.assertEqual(params[0], ["边界"])
-        self.assertIsInstance(params[1], str)
-        self.assertIn("边界", params[1])
-        self.assertEqual(params[2:], (["边界"], ["施压"], 20))
+        self.assertIn("联系", params[1])
+        self.assertIn("边界", params[2])
+        self.assertEqual(params[3:], (["边界"], ["施压"], 20))
 
     def test_empty_query_does_not_touch_database(self):
         connection = FakeConnection()
@@ -504,7 +551,7 @@ class LexicalRetrieverTests(unittest.TestCase):
         self.assertIn("metadata->'task_types'", sql)
         self.assertIn("metadata->'relationship_stages'", sql)
         self.assertEqual(
-            params[4:7],
+            params[5:8],
             (["dating"], ["approved"], ["boundary"]),
         )
 

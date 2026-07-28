@@ -1,0 +1,2767 @@
+{
+  "GD-01-01": {
+    "queries": [
+      "刚认识的对方分享午饭踩雷，如何自然接话",
+      "刚认识阶段日常分享的轻松回复技巧"
+    ],
+    "required_topics": [
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-01-02": {
+    "queries": [
+      "朋友发来路边小猫照片如何回应",
+      "朋友分享宠物照片回复技巧",
+      "日常聊天接话低压力沟通"
+    ],
+    "required_topics": [
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "emotional_support"
+    ],
+    "excluded_topics": [],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-01-03": {
+    "queries": [
+      "约会对象说项目终于结束了，如何接住喜悦并回应",
+      "对方分享好消息时如何自然接话",
+      "低压力沟通回应积极事件"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "forced_disclosure",
+      "aggressive_pursuit"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-01-04": {
+    "queries": [
+      "伴侣说新杯子到了，如何有趣回复",
+      "伴侣分享日常小事，怎么回应显得关心",
+      "情侣日常聊天回复技巧"
+    ],
+    "required_topics": [
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-01-05": {
+    "queries": [
+      "对方推荐了一首歌，我觉得不错，怎么继续聊",
+      "如何回应对方推荐的歌曲并延续对话",
+      "歌曲推荐后聊天话题延伸"
+    ],
+    "required_topics": [
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-01-06": {
+    "queries": [
+      "对方说周末在家收拾房间 如何轻松接话 日常聊天",
+      "轻松接话 日常活动 收拾房间 回复技巧",
+      "低压力沟通 日常分享 接话 自然回复"
+    ],
+    "required_topics": [
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-01-07": {
+    "queries": [
+      "同事转为私聊分享通勤趣事如何回应",
+      "同事私聊分享日常怎么回复",
+      "同事关系私聊互动技巧"
+    ],
+    "required_topics": [
+      "low_pressure_communication",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-01-08": {
+    "queries": [
+      "对方说晚饭自己做成功了，我想表达兴趣",
+      "如何对对方分享的日常表达兴趣和赞美"
+    ],
+    "required_topics": [
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-01-09": {
+    "queries": [
+      "对方发了旅行中的普通风景照，如何自然延续话题",
+      "收到普通风景照后如何自然回复",
+      "旅行风景照话题延续技巧"
+    ],
+    "required_topics": [
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-02-01": {
+    "queries": [
+      "刚认识的人连续只回哈哈 不想追问 如何应对",
+      "对方只回哈哈 冷淡 低压力沟通",
+      "刚认识 回复哈哈 不施压 留空间"
+    ],
+    "required_topics": [
+      "reduce_pressure",
+      "low_pressure_communication",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-02-02": {
+    "queries": [
+      "对方只发了一个表情没有接问题 如何理解意图",
+      "表情回复 不接话 含义 解读",
+      "线上聊天 对方只发表情 不回答问题 怎么办"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "GD-02-03": {
+    "queries": [
+      "约会后对方回复变短 降低压力 不施压",
+      "约会后冷淡 留空间 低压力沟通",
+      "回复变短 数字边界 减少追问"
+    ],
+    "required_topics": [
+      "reduce_pressure",
+      "digital_context",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "boundary"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-02-04": {
+    "queries": [
+      "对方只回嗯嗯 如何收尾 冷淡回复",
+      "分享后对方冷淡回复 低压力收尾",
+      "消息冷淡 不追问 自然结束对话"
+    ],
+    "required_topics": [
+      "reduce_pressure",
+      "low_pressure_communication",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "reply",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-02-05": {
+    "queries": [
+      "对方说都行没有继续话题 不想硬聊 如何自然收尾 降低压力",
+      "聊天中对方冷淡回复都行 不追问 留空间 技巧"
+    ],
+    "required_topics": [
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "reply",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-02-06": {
+    "queries": [
+      "对方隔很久只回一个好如何回应",
+      "对方回复冷淡简短如何低压力回应",
+      "线上聊天对方延迟回复只回一个好怎么处理"
+    ],
+    "required_topics": [
+      "reduce_pressure",
+      "digital_context",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "reply",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-02-07": {
+    "queries": [
+      "对方只点赞没有文字回复，要不要继续发消息",
+      "点赞无回复 如何判断对方兴趣 继续联系",
+      "线上互动 点赞 无文字 低压力 沟通策略"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "invitation"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-02-08": {
+    "queries": [
+      "伴侣忙碌时只回知道了 避免扩大解读",
+      "伴侣简短回复 如何不施压 保持自然沟通",
+      "忙碌时回复冷淡 关系信号 解读"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "reply",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-02-09": {
+    "queries": [
+      "对方说“再说吧” 留出空间 不施压 尊重边界",
+      "模糊拒绝 如何回应 降低压力 尊重对方意愿",
+      "关系初期 对方回复再说吧 含义 应对策略"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-03-01": {
+    "queries": [
+      "对方第二天才回消息但解释加班，如何判断对方态度",
+      "消息延迟回复但给出解释，是否代表兴趣低",
+      "对方回复慢但解释原因，如何回应"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reciprocity",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-03-02": {
+    "queries": [
+      "对方隔三天回复并主动问我近况，如何回复",
+      "延迟回复后对方主动询问近况，如何自然接话",
+      "对方隔几天回复但主动关心，怎么回应"
+    ],
+    "required_topics": [
+      "digital_context",
+      "low_pressure_communication",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-03-03": {
+    "queries": [
+      "刚认识的人一周后才接上原来的话题 对方意图",
+      "刚认识 延迟回复 一周 接话题 关系判断",
+      "刚认识 回复间隔长 如何观察"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-03-04": {
+    "queries": [
+      "伴侣开会半天没回消息，用户焦虑，如何缓解焦虑并理解对方",
+      "伴侣因工作忙碌未回复消息，如何调整心态避免过度解读",
+      "伴侣开会期间不回复消息，如何保持低压力沟通"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "forced_disclosure",
+      "aggressive_pursuit"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-03-05": {
+    "queries": [
+      "对方旅行中回复变慢但内容认真 是否冷淡 如何判断",
+      "旅行中回复变慢 关系信号 解读",
+      "回复变慢但内容认真 对方态度"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-03-06": {
+    "queries": [
+      "对方常在深夜集中回复白天的信息 如何理解 回应",
+      "深夜集中回复 数字边界 低压力沟通",
+      "回复延迟 互惠 关系信号"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-03-07": {
+    "queries": [
+      "约会对象延迟回复后主动提出新的时间 如何判断对方兴趣",
+      "延迟回复后主动邀约 对方心理",
+      "线上互动 延迟回复 主动邀约 关系信号"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reciprocity",
+      "invitation"
+    ],
+    "optional_topics": [
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-03-08": {
+    "queries": [
+      "对方读了消息很久才回复说处理家事 如何理解延迟回复",
+      "消息延迟回复 对方解释家事 如何回应",
+      "线上互动 延迟回复 对方解释 关系判断"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-03-09": {
+    "queries": [
+      "异地关系因时差回复不及时，如何协商沟通节奏",
+      "异地关系沟通节奏协商时差回复延迟",
+      "异地关系沟通节奏协商双方投入对等"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reciprocity",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-04-01": {
+    "queries": [
+      "对方被领导批评感到很差，如何提供情感支持",
+      "低压力沟通安慰技巧"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [],
+    "excluded_topics": [
+      "forced_disclosure",
+      "manipulation"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-04-02": {
+    "queries": [
+      "伴侣考试失利后不想讲话如何提供情绪支持",
+      "伴侣考试失利后需要空间如何低压力沟通",
+      "伴侣考试失利后不想讲话尊重边界"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication",
+      "boundary"
+    ],
+    "optional_topics": [
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "forced_disclosure",
+      "aggressive_pursuit"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-04-03": {
+    "queries": [
+      "朋友说最近什么都提不起兴趣 情绪支持 倾听 安慰",
+      "朋友情绪低落 低压力沟通 不施压"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [],
+    "excluded_topics": [
+      "forced_disclosure",
+      "manipulation"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-04-04": {
+    "queries": [
+      "对方加班后说累到不想动 如何回复 低压力 关心",
+      "加班后疲惫 低压力沟通 回复",
+      "对方说累 不想动 回复 关心 不施压"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "forced_disclosure",
+      "aggressive_pursuit"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-04-05": {
+    "queries": [
+      "家人生病对方担心如何陪伴",
+      "伴侣家人生病情绪支持方法",
+      "低压力陪伴沟通技巧"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-04-06": {
+    "queries": [
+      "对方求职被拒后开始否定自己 如何提供情绪支持 低压力沟通",
+      "求职失败自我否定 安慰 倾听 共情",
+      "对方情绪低落 低压力支持 不施压"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [],
+    "excluded_topics": [
+      "forced_disclosure",
+      "manipulation"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-04-07": {
+    "queries": [
+      "对方和家里吵架后情绪很低，如何提供情绪支持",
+      "情绪低落时低压力沟通方式",
+      "吵架后情绪支持与倾听技巧"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "boundary",
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "forced_disclosure",
+      "manipulation"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-04-08": {
+    "queries": [
+      "约会对象说今天只想安静待着 如何回应 尊重边界 降低压力",
+      "对方需要独处 如何回复 不施压 留空间",
+      "约会对象想安静 低压力沟通 回应方式"
+    ],
+    "required_topics": [
+      "boundary",
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "reply",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-04-09": {
+    "queries": [
+      "伴侣失眠后很烦躁 如何接住情绪 提供情感支持",
+      "伴侣烦躁时低压力沟通 情绪安抚方法"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-05-01": {
+    "queries": [
+      "聊了几天后邀请对方周末喝咖啡",
+      "初期邀约技巧 如何自然提出见面",
+      "邀约被拒绝后如何应对"
+    ],
+    "required_topics": [
+      "invitation",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "rejection"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "advance",
+    "active_skill_scenarios": []
+  },
+  "GD-05-02": {
+    "queries": [
+      "对方提到喜欢展览，想约她一起去，如何邀约",
+      "邀约时如何判断对方兴趣和可用性",
+      "展览邀约的沟通技巧"
+    ],
+    "required_topics": [
+      "invitation",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "advance",
+    "active_skill_scenarios": []
+  },
+  "GD-05-03": {
+    "queries": [
+      "同城网友聊天稳定，如何提出公共场所见面邀约",
+      "第一次见面邀约注意事项",
+      "网友见面安全建议"
+    ],
+    "required_topics": [
+      "invitation",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "advance",
+    "active_skill_scenarios": []
+  },
+  "GD-05-04": {
+    "queries": [
+      "第一次约会后感觉不错，如何提出第二次见面邀约",
+      "第二次约会邀约技巧和注意事项",
+      "第一次约会后对方反应冷淡如何判断"
+    ],
+    "required_topics": [
+      "invitation",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "advance",
+    "active_skill_scenarios": []
+  },
+  "GD-05-05": {
+    "queries": [
+      "朋友聚会认识的人 单独邀请吃饭 如何邀约",
+      "初次单独邀约 注意事项 拒绝处理",
+      "邀约 边界 尊重对方意愿"
+    ],
+    "required_topics": [
+      "invitation",
+      "boundary",
+      "rejection"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "advance",
+    "active_skill_scenarios": []
+  },
+  "GD-05-06": {
+    "queries": [
+      "对方最近忙，给出两个可选时间邀约",
+      "邀约时对方忙如何给出时间选择",
+      "邀约被拒后如何调整时间"
+    ],
+    "required_topics": [
+      "invitation",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "advance",
+    "active_skill_scenarios": []
+  },
+  "GD-05-07": {
+    "queries": [
+      "线上聊天转短时间散步见面 邀约 对方意愿",
+      "初次邀约 散步 低压力 见面 对方接受度",
+      "线上转线下 邀约 拒绝 边界"
+    ],
+    "required_topics": [
+      "invitation",
+      "low_pressure_communication",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "invitation",
+    "action_direction": "advance",
+    "active_skill_scenarios": []
+  },
+  "GD-05-08": {
+    "queries": [
+      "对方主动说想看电影 如何明确发出邀请",
+      "邀约 对方主动提议 如何回应",
+      "发出邀请 注意事项 关系阶段"
+    ],
+    "required_topics": [
+      "invitation",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "advance",
+    "active_skill_scenarios": []
+  },
+  "GD-05-09": {
+    "queries": [
+      "异地对象下月来我的城市，提前约时间见面",
+      "异地恋见面邀约如何沟通",
+      "提前约见面时间注意事项"
+    ],
+    "required_topics": [
+      "invitation",
+      "reciprocity",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "advance",
+    "active_skill_scenarios": []
+  },
+  "GD-06-01": {
+    "queries": [
+      "对方明确说不想发展恋爱关系 拒绝 边界 尊重",
+      "被明确拒绝后如何尊重对方边界 不施压",
+      "拒绝后保持距离 减少联系"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "relationship_exit"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-06-02": {
+    "queries": [
+      "对方说不要再约我了 明确拒绝 如何尊重边界 停止邀约",
+      "被拒绝后如何保持尊重 不施压 留空间"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-06-03": {
+    "queries": [
+      "前任明确说不考虑复合 拒绝 边界 停止追求",
+      "前任拒绝复合后如何尊重边界 不施压",
+      "分手后对方明确拒绝复合 关系结束 接受"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure",
+      "relationship_exit"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-06-04": {
+    "queries": [
+      "对方说只愿意做普通朋友 拒绝 边界 如何回应",
+      "被拒绝后 尊重边界 不施压 普通朋友"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-06-05": {
+    "queries": [
+      "对方拒绝身体接触并让我停下，如何尊重边界并停止施压",
+      "被拒绝后如何正确处理，避免越界和施压",
+      "尊重对方拒绝的沟通方式"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-06-06": {
+    "queries": [
+      "相亲对象说彼此不合适希望到此为止 如何回应拒绝",
+      "相亲被拒绝后 尊重边界 停止联系",
+      "相亲对象明确拒绝 如何体面结束"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "relationship_exit"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-06-07": {
+    "queries": [
+      "对方明确说不想继续聊天 拒绝 边界 尊重",
+      "被拒绝后如何尊重对方边界 停止施压",
+      "明确拒绝后关系处理 不纠缠"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "relationship_exit"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-06-08": {
+    "queries": [
+      "对方拒绝邀约且说以后也不会考虑，如何尊重边界并停止追求",
+      "明确拒绝后如何体面退出不再施压",
+      "被拒绝后如何调整心态和行动"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "relationship_exit"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-06-09": {
+    "queries": [
+      "伴侣提出分手明确不接受挽留如何应对",
+      "分手后尊重对方边界停止纠缠",
+      "被分手后如何调整心态"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "relationship_exit",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-07-01": {
+    "queries": [
+      "邀约后对方说最近忙下次吧 如何应对",
+      "对方说忙 邀约被婉拒 下一步",
+      "邀约被推迟 保持联系 不施压"
+    ],
+    "required_topics": [
+      "rejection",
+      "reduce_pressure",
+      "invitation"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-07-02": {
+    "queries": [
+      "对方连续两次取消见面且没有另约，如何判断对方意图",
+      "连续取消约会后如何降低压力并观察",
+      "对方取消见面后不主动另约，是否表示拒绝"
+    ],
+    "required_topics": [
+      "rejection",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "invitation",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-07-03": {
+    "queries": [
+      "对方说有机会再说但不给时间 如何判断意图",
+      "模糊邀约回应 委婉拒绝 信号识别",
+      "邀约被模糊回应 下一步 低压力沟通"
+    ],
+    "required_topics": [
+      "rejection",
+      "reduce_pressure",
+      "invitation"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-07-04": {
+    "queries": [
+      "对方每次都说改天却仍偶尔主动聊天 意图 判断",
+      "多次拒绝邀约后仍主动聊天 关系信号",
+      "改天回复 偶尔主动 关系分析"
+    ],
+    "required_topics": [
+      "rejection",
+      "reciprocity",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "reduce_pressure",
+      "invitation"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-07-05": {
+    "queries": [
+      "提出见面后对方转移话题 含义 如何应对",
+      "邀约被转移话题 委婉拒绝 信号",
+      "见面邀约 对方回避 关系阶段 判断"
+    ],
+    "required_topics": [
+      "invitation",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-07-06": {
+    "queries": [
+      "对方回复看看吧之后没有继续讨论 如何理解对方意图",
+      "模糊回应 看看吧 后续沟通策略",
+      "邀约后对方冷淡 如何判断信号"
+    ],
+    "required_topics": [
+      "reduce_pressure",
+      "reciprocity",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "invitation",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-07-07": {
+    "queries": [
+      "对方说状态不好不确定何时能见 如何回应 尊重边界",
+      "状态不好 推迟见面 对方意图 判断",
+      "对方以状态不好为由推迟见面 关系分析"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "low_pressure_communication",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-07-08": {
+    "queries": [
+      "对方拒绝本周邀约但主动提出下周末 如何判断意图",
+      "邀约被拒绝后对方主动改期 关系信号",
+      "拒绝邀约后主动提出下次见面 心理"
+    ],
+    "required_topics": [
+      "rejection",
+      "invitation",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "invitation",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-07-09": {
+    "queries": [
+      "对方说暂时不想确定关系但愿意继续了解，如何理解对方意图",
+      "关系推进中被拒绝确定关系后如何保持低压力继续了解",
+      "对方不想确定关系但愿意继续了解，如何判断关系走向"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "uncertainty",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-08-01": {
+    "queries": [
+      "误解对方的话说了重话如何道歉修复关系",
+      "道歉后对方冷淡如何降低压力",
+      "冲突后修复关系的沟通技巧"
+    ],
+    "required_topics": [
+      "conflict_repair",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "GD-08-02": {
+    "queries": [
+      "因迟到争吵双方生气如何修复关系",
+      "争吵后道歉和沟通技巧",
+      "关系修复中如何管理情绪"
+    ],
+    "required_topics": [
+      "conflict_repair",
+      "emotional_support"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "GD-08-03": {
+    "queries": [
+      "伴侣觉得我没有认真听，如何重新沟通修复关系",
+      "倾听不足后如何道歉和改善沟通",
+      "伴侣感到不被倾听时的修复策略"
+    ],
+    "required_topics": [
+      "conflict_repair",
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "GD-08-04": {
+    "queries": [
+      "家务分配引发争执，一起定义问题",
+      "家务分配争执修复方法",
+      "伴侣家务分工协商技巧"
+    ],
+    "required_topics": [
+      "conflict_repair"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "boundary"
+    ],
+    "excluded_topics": [],
+    "task_type": "conflict_repair",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "GD-08-05": {
+    "queries": [
+      "在朋友面前开了让对方难堪的玩笑后如何道歉修复关系",
+      "开玩笑让对方尴尬后的补救方法",
+      "公开场合玩笑过火后的关系修复"
+    ],
+    "required_topics": [
+      "conflict_repair"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "GD-08-06": {
+    "queries": [
+      "争吵时对方情绪过载希望暂停如何处理",
+      "冲突中暂停沟通的技巧",
+      "尊重对方暂停请求的边界"
+    ],
+    "required_topics": [
+      "conflict_repair",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-08-07": {
+    "queries": [
+      "因消费决定冲突后约时间讨论",
+      "消费冲突后如何沟通修复",
+      "冲突后邀约讨论的注意事项"
+    ],
+    "required_topics": [
+      "conflict_repair",
+      "invitation"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "boundary"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "GD-08-08": {
+    "queries": [
+      "答应的事没做到 失去信任 如何修复",
+      "失信后重建信任 道歉 行动",
+      "承诺未兑现 关系修复 沟通"
+    ],
+    "required_topics": [
+      "conflict_repair"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "boundary"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "GD-08-09": {
+    "queries": [
+      "冲突后双方冷静下来，如何启动修复",
+      "关系修复的步骤和沟通技巧",
+      "冲突后对方冷淡时如何推进修复"
+    ],
+    "required_topics": [
+      "conflict_repair",
+      "reciprocity",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "boundary"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "GD-09-01": {
+    "queries": [
+      "一直是我主动联系对方很少发起聊天 对方是否感兴趣 如何调整",
+      "主动联系 对方被动 关系失衡 判断兴趣",
+      "对方不主动聊天 如何降低压力 观察信号"
+    ],
+    "required_topics": [
+      "reciprocity",
+      "reduce_pressure",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-09-02": {
+    "queries": [
+      "每次见面都由我安排对方只被动接受 缺乏主动性 关系失衡",
+      "约会安排单向 对方被动 如何判断兴趣",
+      "关系投入不对等 一方总是安排 另一方被动接受"
+    ],
+    "required_topics": [
+      "reciprocity",
+      "invitation",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-09-03": {
+    "queries": [
+      "对方只在需要帮忙时联系我 关系不对等 工具人",
+      "单方面索取帮助 关系失衡 如何应对",
+      "只在有事才找 朋友或伴侣 边界设置"
+    ],
+    "required_topics": [
+      "reciprocity",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-09-04": {
+    "queries": [
+      "持续送礼后对方明确不愿发展关系，如何停止追求并尊重边界",
+      "送礼被拒绝后如何体面退出",
+      "对方明确拒绝后继续送礼的后果"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "relationship_exit"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-09-05": {
+    "queries": [
+      "异地关系中只有我承担出行成本 投入失衡 如何沟通",
+      "异地关系 出行成本 分担 互惠",
+      "异地关系 经济投入 不对等 建议"
+    ],
+    "required_topics": [
+      "reciprocity",
+      "invitation"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "boundary"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-09-06": {
+    "queries": [
+      "对方偶尔热情但长期不兑现约定，如何判断对方真实意图",
+      "约会邀约长期不兑现，对方偶尔热情，关系信号分析",
+      "对方不兑现约定但偶尔热情，是否应该继续投入"
+    ],
+    "required_topics": [
+      "invitation",
+      "reciprocity",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "rejection"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-09-07": {
+    "queries": [
+      "为关系放弃很多安排对方没有协商",
+      "关系投入不对等如何沟通",
+      "对方不协商安排是否缺乏尊重"
+    ],
+    "required_topics": [
+      "reciprocity",
+      "boundary"
+    ],
+    "optional_topics": [
+      "conflict_repair",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-09-08": {
+    "queries": [
+      "对方愿意聊天却从不回应关系期待 如何判断对方意图",
+      "聊天积极但不推进关系 信号分析",
+      "关系期待不对等 如何应对"
+    ],
+    "required_topics": [
+      "reciprocity",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-10-01": {
+    "queries": [
+      "对方说需要独处几天不希望被频繁联系如何尊重边界",
+      "伴侣需要个人空间时如何降低联系压力",
+      "尊重对方独处需求的同时保持关系"
+    ],
+    "required_topics": [
+      "boundary",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "boundary",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-10-02": {
+    "queries": [
+      "伴侣不愿公开聊天记录 尊重 边界 隐私",
+      "伴侣拒绝公开聊天记录 尊重 关系边界",
+      "伴侣不愿分享聊天记录 尊重 隐私 关系"
+    ],
+    "required_topics": [
+      "boundary",
+      "reciprocity",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "boundary",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-10-03": {
+    "queries": [
+      "对方拒绝亲密接触后如何尊重边界回应",
+      "亲密接触被拒后如何降低压力",
+      "尊重拒绝的沟通方式"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-10-04": {
+    "queries": [
+      "朋友不想讨论家庭隐私，不该继续追问，如何尊重边界",
+      "尊重他人隐私边界的方法",
+      "朋友拒绝讨论隐私后如何沟通"
+    ],
+    "required_topics": [
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": []
+  },
+  "GD-10-05": {
+    "queries": [
+      "对方要求不要查看位置 拒绝 边界 尊重隐私",
+      "伴侣要求停止查看位置 如何回应 尊重边界",
+      "对方设置位置隐私边界 关系处理"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-10-06": {
+    "queries": [
+      "伴侣说玩笑让她不舒服 如何道歉 修复边界",
+      "伴侣表达不舒服 尊重边界 沟通技巧",
+      "玩笑冒犯伴侣 关系修复 低压力沟通"
+    ],
+    "required_topics": [
+      "boundary",
+      "conflict_repair",
+      "emotional_support"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "boundary",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "GD-10-07": {
+    "queries": [
+      "对方不愿发送私人照片 如何接话 尊重边界",
+      "拒绝发送照片 接话 尊重 不施压",
+      "对方拒绝分享照片 回应 尊重隐私"
+    ],
+    "required_topics": [
+      "boundary",
+      "rejection",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-10-08": {
+    "queries": [
+      "约会中对方临时改变主意想提前离开 原因 应对",
+      "约会中途对方想走 如何判断信号",
+      "对方提前结束约会 尊重边界 不施压"
+    ],
+    "required_topics": [
+      "boundary",
+      "reduce_pressure",
+      "invitation"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-11-01": {
+    "queries": [
+      "关系结束后发体面告别消息的写法",
+      "分手后体面告别消息示例",
+      "关系结束如何写告别消息"
+    ],
+    "required_topics": [
+      "relationship_exit"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "exit",
+    "active_skill_scenarios": []
+  },
+  "GD-11-02": {
+    "queries": [
+      "前任要求不再联系 停止纠缠 尊重边界",
+      "分手后前任拒绝联系 如何停止纠缠 尊重对方意愿",
+      "前任明确拒绝 不再联系 停止追求 尊重边界"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure",
+      "relationship_exit"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-11-03": {
+    "queries": [
+      "分手后安全归还物品的方式",
+      "分手后联系前任归还物品的边界",
+      "分手后物品归还避免施压"
+    ],
+    "required_topics": [
+      "relationship_exit",
+      "boundary"
+    ],
+    "optional_topics": [
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-11-04": {
+    "queries": [
+      "长期投入失衡 结束暧昧 如何体面退出",
+      "暧昧关系结束 沟通方式 减少伤害",
+      "投入不对等 暧昧 分手 建议"
+    ],
+    "required_topics": [
+      "relationship_exit",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "boundary",
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "exit",
+    "active_skill_scenarios": []
+  },
+  "GD-11-05": {
+    "queries": [
+      "价值观不合后明确退出关系的方法",
+      "如何尊重对方边界地结束关系",
+      "退出关系时避免施压和操控"
+    ],
+    "required_topics": [
+      "relationship_exit",
+      "boundary"
+    ],
+    "optional_topics": [
+      "rejection",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "exit",
+    "active_skill_scenarios": []
+  },
+  "GD-11-06": {
+    "queries": [
+      "对方反复越过边界 安全离开计划",
+      "安全结束关系 边界被越界 离开策略",
+      "反复越界 安全退出 关系"
+    ],
+    "required_topics": [
+      "boundary",
+      "relationship_exit"
+    ],
+    "optional_topics": [
+      "manipulation",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "safety_exit",
+    "active_skill_scenarios": []
+  },
+  "GD-11-07": {
+    "queries": [
+      "和平分手后如何处理社交媒体联系",
+      "分手后社交媒体边界设置",
+      "前任社交媒体互动建议"
+    ],
+    "required_topics": [
+      "relationship_exit",
+      "boundary",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-11-08": {
+    "queries": [
+      "关系边界与安全替代"
+    ],
+    "required_topics": [
+      "boundary"
+    ],
+    "optional_topics": [],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": []
+  },
+  "GD-12-01": {
+    "queries": [
+      "对方回复随便 没有前文 如何理解意图",
+      "聊天中对方说随便 含义分析",
+      "信息不足时如何回应随便"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "GD-12-02": {
+    "queries": [
+      "她什么意思 对方原话 意图 理解"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "GD-12-03": {
+    "queries": [
+      "对方没回消息 不知道多久 如何判断",
+      "消息未回复 时间未知 对方心理",
+      "未回复 等待 低压力沟通"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "GD-12-04": {
+    "queries": [
+      "关系不对劲 没有具体行为 如何判断",
+      "关系不对劲 常见原因 信号",
+      "关系不对劲 沟通 观察"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "GD-12-05": {
+    "queries": [
+      "只看到一个表情，缺少双方关系阶段，如何分析",
+      "表情回复在关系初期或模糊阶段的意义",
+      "信息不足时如何安全观察"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "GD-12-06": {
+    "queries": [
+      "用户问要不要分手但没有描述冲突 如何判断",
+      "分手决策 缺乏信息 如何分析",
+      "关系评估 信息不足 下一步"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "GD-12-07": {
+    "queries": [
+      "被拒绝了 不知道拒绝什么 如何理解",
+      "拒绝 信号 判断 关系",
+      "被拒绝 下一步 观察"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [
+      "rejection",
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "GD-12-08": {
+    "queries": [
+      "用户想要回复建议，却没有提供对方消息，如何获取必要信息",
+      "信息不足时如何询问对方消息以给出回复建议",
+      "回复建议需要哪些关键信息"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "GD-13-01": {
+    "queries": [
+      "对方情绪低落又拒绝邀约，如何既关心又尊重边界",
+      "情绪低落时拒绝邀约，如何提供低压力支持",
+      "关心情绪低落的人同时尊重拒绝边界的方法"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "rejection",
+      "boundary",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-13-02": {
+    "queries": [
+      "争吵后伴侣提出分手 如何降温 确认决定",
+      "分手后冷静期 低压力沟通 尊重边界",
+      "冲突后修复 分手信号 关系挽回"
+    ],
+    "required_topics": [
+      "conflict_repair",
+      "reduce_pressure",
+      "boundary",
+      "relationship_exit"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-13-03": {
+    "queries": [
+      "对方回复冷淡 如何判断投入 如何回复",
+      "冷淡回复 对方投入度 判断方法",
+      "回复冷淡 低压力沟通 留空间"
+    ],
+    "required_topics": [
+      "reciprocity",
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-13-04": {
+    "queries": [
+      "对方说工作压力大时如何邀约或降低压力",
+      "邀约时对方表达压力大如何回应",
+      "工作压力大时邀约的注意事项"
+    ],
+    "required_topics": [
+      "invitation",
+      "reduce_pressure",
+      "emotional_support"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "invitation",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-13-05": {
+    "queries": [
+      "前任联系求助 提供帮助 保持退出边界 分手后",
+      "分手后前任求助 如何保持边界 提供帮助",
+      "前任求助 边界 分手后 帮助"
+    ],
+    "required_topics": [
+      "relationship_exit",
+      "boundary"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "emotional_support"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-13-06": {
+    "queries": [
+      "对方延迟回复并道歉，如何处理焦虑和协商沟通节奏",
+      "延迟回复后道歉，如何降低压力并自然沟通",
+      "线上互动中对方延迟回复，如何表达需求而不施压"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "emotional_support"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-13-07": {
+    "queries": [
+      "伴侣拒绝亲密接触且情绪低落，应该先做什么",
+      "伴侣情绪低落时如何提供情感支持",
+      "伴侣拒绝亲密接触后如何尊重边界并给予空间"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "boundary",
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "GD-13-08": {
+    "queries": [
+      "关系投入失衡又发生冲突，想修复也要评估退出",
+      "关系修复与退出决策",
+      "冲突后关系评估"
+    ],
+    "required_topics": [
+      "conflict_repair",
+      "reciprocity",
+      "relationship_exit"
+    ],
+    "optional_topics": [
+      "boundary",
+      "emotional_support"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-14-01": {
+    "queries": [
+      "对方说忙但主动另约周六 信号 含义",
+      "忙但主动邀约 关系判断",
+      "对方说忙 另约时间 是否感兴趣"
+    ],
+    "required_topics": [
+      "invitation",
+      "reciprocity",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "GD-14-02": {
+    "queries": [
+      "对方连续三次说忙不另约时间 是否在婉拒 如何应对",
+      "多次以忙为由拒绝邀约 信号判断 关系分析",
+      "对方说忙但不另约 如何降低压力 保持联系"
+    ],
+    "required_topics": [
+      "rejection",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "invitation",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-14-03": {
+    "queries": [
+      "对方晚回后认真解释并继续话题 如何回应",
+      "晚回解释后继续话题 低压力沟通",
+      "消息延迟回复 认真解释 继续话题 回应策略"
+    ],
+    "required_topics": [
+      "digital_context",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "GD-14-04": {
+    "queries": [
+      "对方长期晚回消息且不回应问题 如何应对",
+      "晚回消息 不回应 关系信号 解读",
+      "长期晚回 不回应 降低压力 策略"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "boundary",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-14-05": {
+    "queries": [
+      "对方拒绝本次见面但提出下周，如何尊重边界并保持联系",
+      "拒绝邀约后对方主动提出下次，如何判断诚意",
+      "被拒绝后如何不施压地回应"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "invitation",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-14-06": {
+    "queries": [
+      "对方明确说永远不要再约 拒绝 边界 尊重 停止追求",
+      "被明确拒绝后如何尊重对方边界 停止联系",
+      "永远不要再约 拒绝 关系结束 如何应对"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "relationship_exit",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "GD-14-07": {
+    "queries": [
+      "对方说想独处一晚并约好明天联系，需要空间，如何尊重边界并降低压力",
+      "伴侣需要独处空间时如何给予支持并保持联系",
+      "对方要求空间但主动约明天联系，信号解读"
+    ],
+    "required_topics": [
+      "boundary",
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "reciprocity",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "reduce_pressure",
+    "active_skill_scenarios": []
+  },
+  "GD-14-08": {
+    "queries": [
+      "对方要求永久停止联系 空间 拒绝 边界 尊重",
+      "如何尊重对方永久停止联系的请求 不施压",
+      "永久停止联系 边界 尊重 关系结束"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "relationship_exit",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  }
+}

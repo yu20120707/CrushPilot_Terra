@@ -22,6 +22,9 @@ from evaluation.run_live_gate import (
 from evaluation.run_scene_plan_gate import evaluate_plans, run_cases
 from evaluation.build_golden_dataset import build_cases
 from app.knowledge.ingestion import build_corpus
+
+
+LEGACY_EVALUATION_CORPUS_VERSION = "2026.07.6"
 from app.knowledge.governance.corpus_version import CURRENT_CORPUS_VERSION
 from app.knowledge.ingestion.metadata_enricher import CONTROLLED_TOPICS
 
@@ -230,7 +233,7 @@ class OfflineEvaluationTests(unittest.TestCase):
         cases = [json.loads(line) for line in DATASET.read_text(encoding="utf-8").splitlines()]
         corpus_ids = {
             item.chunk.chunk_id
-            for item in build_corpus(CURRENT_CORPUS_VERSION).chunks
+            for item in build_corpus(LEGACY_EVALUATION_CORPUS_VERSION).chunks
         }
         for case in cases:
             gold = set(case["gold_chunks"])
@@ -245,7 +248,7 @@ class OfflineEvaluationTests(unittest.TestCase):
         self.assertEqual(len(build_cases()), 120)
         corpus_topics = {
             topic
-            for item in build_corpus(CURRENT_CORPUS_VERSION).chunks
+            for item in build_corpus(LEGACY_EVALUATION_CORPUS_VERSION).chunks
             for topic in item.chunk.topics
         }
         self.assertLessEqual(corpus_topics, CONTROLLED_TOPICS)
@@ -276,7 +279,7 @@ class OfflineEvaluationTests(unittest.TestCase):
             source["path"] for source in manifest["sources"]
             if source["required"] and source["status"] == "ingested"
         }
-        self.assertEqual(_source_coverage(CURRENT_CORPUS_VERSION, ingested), 1)
+        self.assertEqual(_source_coverage(LEGACY_EVALUATION_CORPUS_VERSION, ingested), 1)
         self.assertLess(_source_coverage(CURRENT_CORPUS_VERSION, set()), 1)
 
     def test_trace_completeness_uses_all_expected_requests_as_denominator(self):

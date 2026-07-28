@@ -1,0 +1,386 @@
+{
+  "HOLDOUT-01": {
+    "queries": [
+      "女生说别再约我了对我没那个意思怎么处理",
+      "被明确拒绝后如何尊重边界不再纠缠",
+      "拒绝后如何保持尊严和关系修复"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "relationship_exit"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "HOLDOUT-02": {
+    "queries": [
+      "表白被拒后对方说只想做普通朋友还让我不要等他，是否应该再争取一次",
+      "被明确拒绝后继续追求是否合适",
+      "如何尊重对方边界并停止追求"
+    ],
+    "required_topics": [
+      "rejection",
+      "boundary",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": [
+      "explicit_rejection"
+    ]
+  },
+  "HOLDOUT-03": {
+    "queries": [
+      "对象说不喜欢我翻她手机，担心她隐瞒事情，接下来怎么办",
+      "伴侣翻手机隐私边界信任问题",
+      "如何在不翻手机的情况下了解伴侣隐瞒"
+    ],
+    "required_topics": [
+      "boundary",
+      "rejection",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "digital_context"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "boundary",
+    "action_direction": "stop",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-04": {
+    "queries": [
+      "约会时对方说今天不想有身体接触，我有点扫兴，如何回应",
+      "尊重对方身体接触边界的同时表达自己的感受",
+      "约会中对方拒绝身体接触后的沟通技巧"
+    ],
+    "required_topics": [
+      "boundary",
+      "rejection",
+      "emotional_support"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "reply",
+    "action_direction": "respond",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-05": {
+    "queries": [
+      "对方回复从当天变隔十几个小时但内容正常，该连续追问还是先等等",
+      "消息延迟回复但内容正常，如何判断对方兴趣和应对",
+      "线上互动中回复频率变化，如何低压力沟通"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "low_pressure_communication",
+      "uncertainty"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-06": {
+    "queries": [
+      "对方已读未回复，用户怕关系变淡想再发消息确认，如何应对",
+      "已读不回后如何避免关系变淡，低压力沟通",
+      "线上消息延迟回复时如何保持关系"
+    ],
+    "required_topics": [
+      "digital_context",
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "aggressive_pursuit",
+      "manipulation",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-07": {
+    "queries": [
+      "对方很少主动但会回应，如何判断是否继续投入",
+      "主动一个月对方被动，关系投入不平衡怎么办",
+      "对方回应但不主动，如何判断对方兴趣"
+    ],
+    "required_topics": [
+      "reciprocity",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "digital_context",
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-08": {
+    "queries": [
+      "她说很重视我，但每次协调时间和付出精力都是我在让步，如何判断关系是否对等",
+      "关系中对等与让步的评估方法",
+      "对方说重视但行动上不付出，如何沟通"
+    ],
+    "required_topics": [
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "boundary",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-09": {
+    "queries": [
+      "体面结束关系后如何处理后续联系",
+      "分手后如何保持边界和减少联系",
+      "关系结束后的互惠和退出策略"
+    ],
+    "required_topics": [
+      "relationship_exit",
+      "boundary",
+      "reciprocity"
+    ],
+    "optional_topics": [
+      "reduce_pressure",
+      "conflict_repair"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "exit",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-10": {
+    "queries": [
+      "分手后前任反复要求见面复合 如何退出 不再拉扯",
+      "分手后前任纠缠 如何坚定拒绝 停止联系",
+      "分手后前任反复要求复合 边界设置 退出策略"
+    ],
+    "required_topics": [
+      "relationship_exit",
+      "boundary",
+      "rejection"
+    ],
+    "optional_topics": [
+      "reduce_pressure",
+      "reciprocity"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "relationship_exit",
+    "action_direction": "stop",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-11": {
+    "queries": [
+      "女朋友工作被否定说自己很失败不想分析解决办法如何陪伴",
+      "伴侣情绪低落自我否定时低压力支持方法",
+      "如何提供情绪价值不施压不追问"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication",
+      "reduce_pressure"
+    ],
+    "optional_topics": [
+      "boundary"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "forced_disclosure",
+      "aggressive_pursuit"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "HOLDOUT-12": {
+    "queries": [
+      "对方家里出事情绪低落说想安静一下 如何表达关心又不逼倾诉",
+      "伴侣情绪低落需要空间 低压力支持方式",
+      "对方说想安静一下 如何回应"
+    ],
+    "required_topics": [
+      "emotional_support",
+      "low_pressure_communication",
+      "boundary"
+    ],
+    "optional_topics": [
+      "reduce_pressure"
+    ],
+    "excluded_topics": [
+      "forced_disclosure",
+      "manipulation",
+      "aggressive_pursuit"
+    ],
+    "task_type": "emotional_support",
+    "action_direction": "support",
+    "active_skill_scenarios": [
+      "emotional_support"
+    ]
+  },
+  "HOLDOUT-13": {
+    "queries": [
+      "因失约吵架后对方说需要缓一缓，如何道歉修复并确认下周饭局是否取消",
+      "吵架后对方需要空间，如何低压力沟通修复关系",
+      "失约后道歉与确认见面安排的先后顺序"
+    ],
+    "required_topics": [
+      "conflict_repair",
+      "boundary",
+      "reduce_pressure",
+      "invitation"
+    ],
+    "optional_topics": [
+      "reciprocity",
+      "emotional_support"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure"
+    ],
+    "task_type": "conflict_repair",
+    "action_direction": "repair",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-14": {
+    "queries": [
+      "对方回复慢但主动提新餐厅，如何判断兴趣并顺势约具体时间",
+      "回复变慢后对方主动邀约，如何推进约会",
+      "线上互动中回复慢与主动邀约的矛盾信号处理"
+    ],
+    "required_topics": [
+      "reciprocity",
+      "invitation",
+      "digital_context"
+    ],
+    "optional_topics": [
+      "reduce_pressure",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "manipulation",
+      "aggressive_pursuit",
+      "forced_disclosure",
+      "mind_reading"
+    ],
+    "task_type": "relationship_analysis",
+    "action_direction": "observe",
+    "active_skill_scenarios": []
+  },
+  "HOLDOUT-15": {
+    "queries": [
+      "对方只回复嗯是不是生气了 要不要回复",
+      "单字回复嗯 冷淡 如何应对",
+      "消息只回嗯 对方情绪 判断"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [
+      "emotional_support",
+      "low_pressure_communication"
+    ],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  },
+  "HOLDOUT-16": {
+    "queries": [
+      "朋友转述对方有好感但没看到原话 无明显互动 能否判断想发展关系",
+      "转述好感 缺乏直接互动 如何判断对方意图",
+      "间接好感信号 关系发展判断 信息不足"
+    ],
+    "required_topics": [
+      "uncertainty",
+      "conservative_action"
+    ],
+    "optional_topics": [
+      "general_relationship_advice"
+    ],
+    "excluded_topics": [
+      "mind_reading"
+    ],
+    "task_type": "general_advice",
+    "action_direction": "clarify",
+    "active_skill_scenarios": [
+      "insufficient_information"
+    ]
+  }
+}

@@ -161,8 +161,13 @@ class RetrievalService:
             }
             for candidate in reranked
         ]
+        resolved, suppressed = _resolve_conflicts(reranked)
+        reranked = [
+            {**candidate, "suppressed_by_new_kb": candidate["chunk_id"] in suppressed}
+            for candidate in reranked
+        ]
         selected = select_diverse(
-            reranked,
+            resolved,
             plan.required_topics,
             plan.excluded_topics,
             limit=min(plan.final_top_k, 6),
@@ -319,6 +324,11 @@ def _trace_candidates(candidates: list[dict], original_score: str) -> list[dict]
                 "topics",
                 "knowledge_type",
                 "action_labels",
+                "source_collection",
+                "source_priority",
+                "decision_key",
+                "usage_scope",
+                "suppressed_by_new_kb",
             )
             if key in candidate
         }
@@ -332,6 +342,37 @@ def _trace_candidates(candidates: list[dict], original_score: str) -> list[dict]
             item["content_id"] = _hash(candidate["content"])
         safe.append(item)
     return safe
+
+
+def _resolve_conflicts(candidates: list[dict[str, Any]]) -> tuple[list[dict[str, Any]], set[str]]:
+    """Prefer a newer applicable stance only when it is comparably relevant.
+
+    Candidates reach this stage only after online-scope filtering and reranking.  A
+    new collection candidate can suppress an original candidate with the same
+    decision key when their conclusion differs and the original is not clearly
+    more relevant.  The suppressed IDs remain in the rerank trace.
+    """
+    by_key: dict[str, list[dict[str, Any]]] = {}
+    for candidate in candidates:
+        key = str(candidate.get("decision_key") or "")
+        if key:
+            by_key.setdefault(key, []).append(candidate)
+    suppressed: set[str] = set()
+    for group in by_key.values():
+        for newer in group:
+            if newer.get("source_collection") != "new_kb":
+                continue
+            new_score = float(newer.get("rerank_score", newer.get("rrf_score", newer.get("score", 0))))
+            for older in group:
+                if older.get("source_collection") != "original":
+                    continue
+                old_score = float(older.get("rerank_score", older.get("rrf_score", older.get("score", 0))))
+                explicit_supersession = str(older["chunk_id"]) in {
+                    str(chunk_id) for chunk_id in newer.get("supersedes_chunk_ids", [])
+                }
+                if explicit_supersession and new_score >= old_score - 0.15:
+                    suppressed.add(str(older["chunk_id"]))
+    return [item for item in candidates if str(item["chunk_id"]) not in suppressed], suppressed
 
 
 def _ranks(results: list[list[dict[str, Any]]]) -> dict[tuple[str, int], int]:

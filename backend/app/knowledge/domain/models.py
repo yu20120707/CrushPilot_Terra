@@ -160,6 +160,13 @@ class KnowledgeChunk(BaseModel):
     not_applicable_when: list[str]
     evidence_level: Literal["L1", "L2", "L3", "L4"]
     review_status: Literal["draft", "approved", "rejected", "deprecated"]
+    usage_scope: Literal["online_eligible", "research_only"]
+    source_collection: Literal["original", "new_kb"]
+    source_priority: int = Field(ge=0)
+    decision_key: str
+    stance: str
+    supersedes_chunk_ids: list[str] = Field(default_factory=list)
+    admission_reason: str
     priority: int
     source_path: str
     source_sha256: str

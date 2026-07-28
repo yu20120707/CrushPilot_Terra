@@ -255,6 +255,28 @@ class RetrievalServiceTests(unittest.TestCase):
                     "reranker_unavailable" if unavailable else None,
                 )
 
+    def test_new_kb_suppresses_conflicting_original_but_not_better_matched_original(self):
+        newer = chunk("new", content="new stance")
+        newer.update({"source_collection": "new_kb", "source_priority": 100, "decision_key": "boundary", "stance": "new"})
+        older = chunk("old", content="old stance")
+        older.update({"source_collection": "original", "source_priority": 50, "decision_key": "boundary", "stance": "old"})
+        values = {"primary": [newer, older], "secondary": []}
+        result, *_ = self.run_service(values, values)
+        self.assertEqual([item["chunk_id"] for item in result.chunks], ["new"])
+        suppressed = next(item for item in result.trace.reranked_candidates if item["chunk_id"] == "old")
+        self.assertTrue(suppressed["suppressed_by_new_kb"])
+
+    def test_same_topic_with_distinct_decision_keys_is_not_suppressed(self):
+        newer = chunk("new", content="new guidance")
+        newer.update({"source_collection": "new_kb", "source_priority": 100, "decision_key": "ending a relationship", "stance": "new"})
+        older = chunk("old", content="old guidance")
+        older.update({"source_collection": "original", "source_priority": 50, "decision_key": "recovering after a breakup", "stance": "old"})
+        values = {"primary": [newer, older], "secondary": []}
+        result, *_ = self.run_service(values, values)
+        self.assertEqual({item["chunk_id"] for item in result.chunks}, {"new", "old"})
+        old_trace = next(item for item in result.trace.reranked_candidates if item["chunk_id"] == "old")
+        self.assertFalse(old_trace["suppressed_by_new_kb"])
+
     def test_insufficient_evidence_is_not_injected_into_generation(self):
         unrelated = chunk("unrelated", topic="invitation")
         values = {"primary": [unrelated], "secondary": []}

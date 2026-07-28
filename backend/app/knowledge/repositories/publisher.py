@@ -55,13 +55,15 @@ class CorpusPublisher:
             """
             SELECT
                 (SELECT count(*) FROM knowledge_chunks
-                 WHERE corpus_version = %s AND review_status = 'approved'),
+                 WHERE corpus_version = %s AND review_status = 'approved'
+                   AND usage_scope = 'online_eligible'),
                 (SELECT count(*) FROM knowledge_embeddings e
                  JOIN knowledge_chunks c
                    ON c.id = e.chunk_id
                   AND c.corpus_version = e.corpus_version
                  WHERE e.corpus_version = %s
                    AND c.review_status = 'approved'
+                   AND c.usage_scope = 'online_eligible'
                    AND e.embedding_model = v.embedding_model
                    AND e.embedding_dimension = v.embedding_dimension)
             FROM knowledge_corpus_versions v

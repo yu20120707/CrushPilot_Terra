@@ -1,0 +1,6 @@
+C:\Users\26561\AppData\Local\uv\cache\archive-v0\FxWc6dWdbwNpd0KpsJVXa\Lib\site-packages\jieba\_compat.py:18: UserWarning: pkg_resources is deprecated as an API. See https://setuptools.pypa.io/en/latest/pkg_resources.html. The pkg_resources package is slated for removal as early as 2025-11-30. Refrain from using this package or pin to Setuptools<81.
+  import pkg_resources
+Building prefix dict from the default dictionary ...
+Loading model from cache C:\Users\26561\AppData\Local\Temp\jieba.cache
+Loading model cost 0.634 seconds.
+Prefix dict has been built successfully.

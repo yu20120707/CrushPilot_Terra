@@ -7,12 +7,12 @@ sys.path.insert(0, str(ROOT))
 
 from app.knowledge.ingestion import build_corpus
 from app.knowledge.governance.corpus_version import CURRENT_CORPUS_VERSION
-from scripts.publish_corpus import embedding_text, search_tokens
+from scripts.publish_corpus import DEFAULT_CORPUS_VERSION, DEFAULT_NEW_KB_ROOT, embedding_text, search_tokens
 
 
 class PublishCorpusTests(unittest.TestCase):
     def test_embedding_recipe_uses_a_new_corpus_identity(self):
-        self.assertEqual(CURRENT_CORPUS_VERSION, "2026.07.6")
+        self.assertEqual(CURRENT_CORPUS_VERSION, "2026.08.1")
         version_artifact = (
             ROOT / "trellis/retrieval-system-refactor/corpus-version.json"
         )
@@ -22,6 +22,10 @@ class PublishCorpusTests(unittest.TestCase):
             ],
             CURRENT_CORPUS_VERSION,
         )
+
+    def test_default_publish_target_is_the_dual_source_release(self):
+        self.assertEqual(DEFAULT_CORPUS_VERSION, "2026.08.1")
+        self.assertEqual(DEFAULT_NEW_KB_ROOT, ROOT / "knowledge" / "pua-knowledge-sharing")
 
     def test_search_tokens_cover_every_chunk_and_four_weights(self):
         build = build_corpus("test-publish")

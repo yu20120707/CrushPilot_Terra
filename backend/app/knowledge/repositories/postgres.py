@@ -281,6 +281,13 @@ class PostgresKnowledgeRepository:
                         "evidence_level": chunk.evidence_level,
                         "priority": chunk.priority,
                         "token_count": chunk.token_count,
+                        "source_collection": getattr(chunk, "source_collection", "original"),
+                        "source_priority": getattr(chunk, "source_priority", 50),
+                        "usage_scope": getattr(chunk, "usage_scope", "online_eligible"),
+                        "decision_key": getattr(chunk, "decision_key", ""),
+                        "stance": getattr(chunk, "stance", ""),
+                        "supersedes_chunk_ids": getattr(chunk, "supersedes_chunk_ids", []),
+                        "admission_reason": getattr(chunk, "admission_reason", "legacy approved chunk"),
                         "previous_chunk_id": record.relationships.previous_chunk_id,
                         "next_chunk_id": record.relationships.next_chunk_id,
                     }
@@ -289,14 +296,15 @@ class PostgresKnowledgeRepository:
                         INSERT INTO knowledge_chunks (
                             id, document_id, parent_section_id, title, heading_path,
                             content, metadata, search_tokens, search_vector, review_status,
-                            source_sha256, corpus_version
+                            usage_scope, source_collection, source_priority, decision_key, stance,
+                            supersedes_chunk_ids, admission_reason, source_sha256, corpus_version
                         ) VALUES (
                             %s, %s, %s, %s, %s::jsonb, %s, %s::jsonb, %s,
                             setweight(to_tsvector('simple', %s), 'A') ||
                             setweight(to_tsvector('simple', %s), 'B') ||
                             setweight(to_tsvector('simple', %s), 'C') ||
                             setweight(to_tsvector('simple', %s), 'D'),
-                            %s, %s, %s
+                            %s, %s, %s, %s, %s, %s, %s::jsonb, %s, %s, %s
                         )
                         """,
                         (
@@ -305,9 +313,42 @@ class PostgresKnowledgeRepository:
                             json.dumps(metadata), " ".join(weighted_tokens.values()),
                             weighted_tokens["A"], weighted_tokens["B"],
                             weighted_tokens["C"], weighted_tokens["D"],
-                            chunk.review_status, chunk.source_sha256, corpus.version,
+                            chunk.review_status, getattr(chunk, "usage_scope", "online_eligible"),
+                            getattr(chunk, "source_collection", "original"),
+                            getattr(chunk, "source_priority", 50), getattr(chunk, "decision_key", ""),
+                            getattr(chunk, "stance", ""),
+                            json.dumps(getattr(chunk, "supersedes_chunk_ids", [])),
+                            getattr(chunk, "admission_reason", "legacy approved chunk"),
+                            chunk.source_sha256, corpus.version,
                         ),
                     )
+            self.connection.commit()
+        except Exception:
+            self.connection.rollback()
+            raise
+
+    def link_supersedes_from_published(self, corpus_version: str) -> None:
+        """Record auditable cross-version conflict candidates before atomic publish."""
+        try:
+            with self.connection.cursor() as cursor:
+                cursor.execute(
+                    """
+                    UPDATE knowledge_chunks candidate
+                    SET supersedes_chunk_ids = COALESCE((
+                        SELECT jsonb_agg(old.id::text ORDER BY old.source_priority DESC)
+                        FROM knowledge_chunks old
+                        JOIN knowledge_corpus_versions previous
+                          ON previous.version = old.corpus_version
+                        WHERE previous.status = 'published'
+                          AND old.source_collection = 'original'
+                          AND old.decision_key <> ''
+                          AND old.decision_key = candidate.decision_key
+                    ), '[]'::jsonb)
+                    WHERE candidate.corpus_version = %s
+                      AND candidate.source_collection = 'new_kb'
+                    """,
+                    (corpus_version,),
+                )
             self.connection.commit()
         except Exception:
             self.connection.rollback()
@@ -361,6 +402,7 @@ class PostgresKnowledgeRepository:
                       ON v.version = c.corpus_version
                     WHERE v.status = 'published'
                       AND c.review_status = 'approved'
+                      AND c.usage_scope = 'online_eligible'
                       AND c.id = ANY(%s::uuid[])
                     """,
                     (neighbor_ids,),
@@ -432,7 +474,8 @@ class PostgresKnowledgeRepository:
         if limit < 1:
             raise ValueError("limit must be positive")
         allowed_filters = {
-            "review_status", "task_types", "relationship_stages", "knowledge_type"
+            "review_status", "task_types", "relationship_stages", "knowledge_type",
+            "usage_scope", "source_collection",
         }
         hard_filters = hard_filters or {}
         if unknown := set(hard_filters) - allowed_filters:
@@ -446,12 +489,16 @@ class PostgresKnowledgeRepository:
         task_types = hard_filters.get("task_types")
         relationship_stages = hard_filters.get("relationship_stages")
         knowledge_type = hard_filters.get("knowledge_type")
+        usage_scope = hard_filters.get("usage_scope")
+        source_collection = hard_filters.get("source_collection")
         vector = "[" + ",".join(str(value) for value in embedding) + "]"
         with self.connection.cursor() as cursor:
             cursor.execute(
                 """
                 SELECT c.id AS chunk_id, c.document_id, c.parent_section_id,
                        c.title, c.heading_path, c.content, c.metadata,
+                       c.usage_scope, c.source_collection, c.source_priority,
+                       c.decision_key, c.stance, c.supersedes_chunk_ids, c.admission_reason,
                        1 - (e.embedding <=> %s::vector) AS score
                 FROM knowledge_corpus_versions v
                 JOIN knowledge_chunks c ON c.corpus_version = v.version
@@ -461,12 +508,15 @@ class PostgresKnowledgeRepository:
                  AND e.corpus_version = v.version
                 WHERE v.status = 'published'
                   AND c.review_status = 'approved'
+                  AND c.usage_scope = 'online_eligible'
                   AND e.embedding_model = %s
                   AND e.embedding_dimension = %s
                   AND (%s::text[] IS NULL OR c.review_status = ANY(%s::text[]))
                   AND (%s::text[] IS NULL OR c.metadata -> 'task_types' ?| %s::text[])
                   AND (%s::text[] IS NULL OR c.metadata -> 'relationship_stages' ?| %s::text[])
                   AND (%s::text[] IS NULL OR c.metadata ->> 'knowledge_type' = ANY(%s::text[]))
+                  AND (%s::text[] IS NULL OR c.usage_scope = ANY(%s::text[]))
+                  AND (%s::text[] IS NULL OR c.source_collection = ANY(%s::text[]))
                 ORDER BY e.embedding <=> %s::vector
                 LIMIT %s
                 """,
@@ -474,7 +524,8 @@ class PostgresKnowledgeRepository:
                     vector, embedding_model, len(embedding),
                     review_status, review_status, task_types, task_types,
                     relationship_stages, relationship_stages,
-                    knowledge_type, knowledge_type, vector, limit,
+                    knowledge_type, knowledge_type, usage_scope, usage_scope,
+                    source_collection, source_collection, vector, limit,
                 ),
             )
             columns = [column.name for column in cursor.description]
@@ -497,13 +548,15 @@ class PostgresKnowledgeRepository:
                        embedding_normalization, tokenizer_version, chunker_version,
                        (SELECT count(*) FROM knowledge_chunks c
                         WHERE c.corpus_version = v.version
-                          AND c.review_status = 'approved') AS chunk_count,
+                          AND c.review_status = 'approved'
+                          AND c.usage_scope = 'online_eligible') AS chunk_count,
                        (SELECT count(*) FROM knowledge_embeddings e
                         JOIN knowledge_chunks c
                           ON c.id = e.chunk_id
                          AND c.corpus_version = e.corpus_version
                         WHERE e.corpus_version = v.version
                           AND c.review_status = 'approved'
+                          AND c.usage_scope = 'online_eligible'
                           AND e.embedding_model = v.embedding_model
                           AND e.embedding_dimension = v.embedding_dimension) AS embedding_count
                 FROM knowledge_corpus_versions v

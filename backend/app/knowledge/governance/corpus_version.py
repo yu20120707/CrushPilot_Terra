@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 
 
-CURRENT_CORPUS_VERSION = "2026.07.6"
+CURRENT_CORPUS_VERSION = "2026.08.1"
 
 
 @dataclass(frozen=True)

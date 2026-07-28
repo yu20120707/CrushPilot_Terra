@@ -22,7 +22,7 @@ services:
       PGPASSWORD: ${POSTGRES_PASSWORD}
       DEMO_MODE: "false"
       MODEL_PROVIDER: ${MODEL_PROVIDER:-deepseek}
-      CORPUS_VERSION: ${CORPUS_VERSION:-2026.07.6}
+      CORPUS_VERSION: ${CORPUS_VERSION:-2026.08.1}
       EMBEDDING_MODEL: ${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
       EMBEDDING_DIMENSION: ${EMBEDDING_DIMENSION:-512}
       EMBEDDING_NORMALIZATION: ${EMBEDDING_NORMALIZATION:-l2}
@@ -59,11 +59,13 @@ services:
       - --database-url
       - postgresql://crushpilot@postgres:5432/crushpilot?sslmode=disable
       - --version
-      - ${CORPUS_VERSION:-2026.07.6}
+      - ${CORPUS_VERSION:-2026.08.1}
       - --embedding-model
       - ${EMBEDDING_MODEL:-BAAI/bge-small-zh-v1.5}
       - --artifacts
       - /data/corpus-artifacts
+      - --new-kb-root
+      - /app/knowledge/pua-knowledge-sharing
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
     depends_on:

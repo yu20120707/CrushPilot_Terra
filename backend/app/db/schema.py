@@ -58,6 +58,15 @@ SCHEMA_STATEMENTS = (
         search_tokens text NOT NULL,
         search_vector tsvector NOT NULL,
         review_status varchar NOT NULL,
+        usage_scope varchar NOT NULL DEFAULT 'research_only'
+            CHECK (usage_scope IN ('online_eligible', 'research_only')),
+        source_collection varchar NOT NULL DEFAULT 'original'
+            CHECK (source_collection IN ('original', 'new_kb')),
+        source_priority integer NOT NULL DEFAULT 50 CHECK (source_priority >= 0),
+        decision_key text NOT NULL DEFAULT '',
+        stance text NOT NULL DEFAULT '',
+        supersedes_chunk_ids jsonb NOT NULL DEFAULT '[]'::jsonb,
+        admission_reason text NOT NULL DEFAULT '',
         source_sha256 varchar NOT NULL,
         corpus_version varchar NOT NULL REFERENCES knowledge_corpus_versions(version) ON DELETE CASCADE,
         created_at timestamptz NOT NULL DEFAULT now(),
@@ -79,7 +88,16 @@ SCHEMA_STATEMENTS = (
     """,
     "CREATE INDEX IF NOT EXISTS idx_chunks_search_vector ON knowledge_chunks USING GIN(search_vector)",
     "CREATE INDEX IF NOT EXISTS idx_chunks_metadata ON knowledge_chunks USING GIN(metadata)",
-    "CREATE INDEX IF NOT EXISTS idx_chunks_corpus_status ON knowledge_chunks(corpus_version, review_status)",
+    "ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS usage_scope varchar NOT NULL DEFAULT 'research_only' CHECK (usage_scope IN ('online_eligible', 'research_only'))",
+    "ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS source_collection varchar NOT NULL DEFAULT 'original' CHECK (source_collection IN ('original', 'new_kb'))",
+    "ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS source_priority integer NOT NULL DEFAULT 50 CHECK (source_priority >= 0)",
+    "ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS decision_key text NOT NULL DEFAULT ''",
+    "ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS stance text NOT NULL DEFAULT ''",
+    "ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS supersedes_chunk_ids jsonb NOT NULL DEFAULT '[]'::jsonb",
+    "ALTER TABLE knowledge_chunks ADD COLUMN IF NOT EXISTS admission_reason text NOT NULL DEFAULT ''",
+    "UPDATE knowledge_chunks SET usage_scope = 'online_eligible', source_collection = 'original', source_priority = 50, admission_reason = 'schema migration: existing corpus preserved as online original' WHERE usage_scope = 'research_only' AND source_collection = 'original' AND review_status = 'approved' AND admission_reason = ''",
+    "CREATE INDEX IF NOT EXISTS idx_chunks_corpus_status ON knowledge_chunks(corpus_version, review_status, usage_scope)",
+    "CREATE INDEX IF NOT EXISTS idx_chunks_conflict_resolution ON knowledge_chunks(corpus_version, decision_key, source_priority DESC)",
     """
     CREATE TABLE IF NOT EXISTS knowledge_embeddings (
         chunk_id uuid NOT NULL,

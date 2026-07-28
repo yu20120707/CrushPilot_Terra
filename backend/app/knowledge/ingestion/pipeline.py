@@ -67,6 +67,10 @@ class BuildReport:
     missing_metadata_ratios: dict[str, float]
     metadata_suggestion_statuses: dict[str, int]
     metadata_suggestion_ratios: dict[str, float]
+    collection_document_counts: dict[str, int]
+    collection_chunk_counts: dict[str, int]
+    usage_scope_counts: dict[str, int]
+    review_status_counts: dict[str, int]
 
 
 @dataclass(frozen=True)
@@ -80,11 +84,53 @@ def _stable_id(prefix: str, *parts: str) -> str:
     return str(uuid.uuid5(ID_NAMESPACE, "\0".join((prefix, *parts))))
 
 
+def _admission_for_new_kb(title: str, heading_path: list[str], content: str) -> tuple[str, str, str]:
+    """Return usage scope, review status and an auditable deterministic reason."""
+    text = " ".join((title, *heading_path, content)).lower()
+    # New-library rejection is now reserved for explicit, audited overrides.
+    # Generic keyword matching produced false positives and must not auto-reject chunks.
+    unsafe_markers: tuple[str, ...] = ()
+    safe_markers = ("尊重", "共情", "边界", "同意", "沟通", "倾听", "道歉", "拒绝", "留空间", "不施压", "健康")
+    if any(marker in text for marker in unsafe_markers):
+        return "research_only", "rejected", "规则隔离：命中操控、伤害或明显不适合在线建议的风险词；等待人工复核上下文"
+    # Keyword signals are useful for routing but insufficient evidence for a public
+    # release.  New material stays out of ordinary chat until an auditable review
+    # explicitly changes both fields in staging.
+    if any(marker in text for marker in safe_markers):
+        return "research_only", "draft", "规则候选：命中健康沟通信号，但新来源必须经人工准入后才能在线使用"
+    return "research_only", "draft", "规则隔离：缺少可复查的在线准入信号，等待人工审核"
+
+
+def _decision_key(title: str, topics: list[str]) -> str:
+    """Use a narrow, reviewable semantic decision label rather than broad topics.
+
+    Topics are retrieval facets, not mutually exclusive conclusions.  Treating a
+    whole topic set as one decision would suppress unrelated advice across source
+    collections.  Matching headings provide a conservative default; reviewers can
+    explicitly align a decision key when recording a true supersession.
+    """
+    return title.strip().lower()
+
+
+def _manual_admission_overrides(root: Path) -> dict[str, dict[str, object]]:
+    path = root / "admission-overrides.yaml"
+    if not path.is_file():
+        return {}
+    data = yaml.safe_load(path.read_text(encoding="utf-8")) or {}
+    entries = data.get("chunks", data) if isinstance(data, dict) else {}
+    if not isinstance(entries, dict):
+        raise ValueError("admission-overrides.yaml must map source paths to overrides")
+    return entries
+
+
 def ingest_document(
     path: Path,
     root: Path,
     corpus_version: str,
     metadata_suggester: Callable[[str, list[str], str], object | None] | None = None,
+    *,
+    source_collection: Literal["original", "new_kb"] = "original",
+    admission_overrides: dict[str, dict[str, object]] | None = None,
 ) -> list[IngestedChunk]:
     relative = path.relative_to(root).as_posix()
     source_hash = hashlib.sha256(path.read_bytes()).hexdigest()
@@ -114,6 +160,18 @@ def ingest_document(
         chunk_id = _stable_id(
             "chunk", document_id, "/".join(item.heading_path), str(index), item.content
         )
+        usage_scope, review_status, admission_reason = (
+            _admission_for_new_kb(item.heading_path[-1], list(item.heading_path), item.content)
+            if source_collection == "new_kb"
+            else ("online_eligible", "approved", "已发布原库：沿用既有审核准入")
+        )
+        override = (admission_overrides or {}).get(relative) or (admission_overrides or {}).get("*")
+        if override is not None:
+            usage_scope = str(override.get("usage_scope", usage_scope))
+            review_status = str(override.get("review_status", review_status))
+            admission_reason = str(override.get("admission_reason", admission_reason))
+            if (usage_scope, review_status) != ("online_eligible", "approved") and usage_scope != "research_only":
+                raise ValueError(f"{relative}: invalid admission override")
         chunks.append((
             KnowledgeChunk(
                 chunk_id=chunk_id,
@@ -130,7 +188,13 @@ def ingest_document(
                 applicable_when=suggested.applicable_when,
                 not_applicable_when=suggested.not_applicable_when,
                 evidence_level="L4",
-                review_status="approved",
+                review_status=review_status,
+                usage_scope=usage_scope,
+                source_collection=source_collection,
+                source_priority=100 if source_collection == "new_kb" else 50,
+                decision_key=_decision_key(item.heading_path[-1], suggested.topics),
+                stance=item.content[:240],
+                admission_reason=admission_reason,
                 priority=0,
                 source_path=relative,
                 source_sha256=source_hash,
@@ -167,21 +231,39 @@ def build_corpus(
     tokenizer_version: str = "jieba-0.42",
     chunker_version: str = "heading-semantic-v1",
     metadata_suggester: Callable[[str, list[str], str], object | None] | None = None,
+    new_kb_root: Path | None = None,
 ) -> CorpusBuild:
     root = root or source_root()
-    by_document = [
-        (path, ingest_document(path, root, corpus_version, metadata_suggester))
+    if new_kb_root is not None and (not new_kb_root.is_dir()):
+        raise ValueError(f"new knowledge root is missing: {new_kb_root}")
+    original_documents = [
+        ("original", path, root, ingest_document(path, root, corpus_version, metadata_suggester))
         for path in scan_sources(root)
     ]
+    new_documents = []
+    if new_kb_root is not None:
+        new_kb_root = new_kb_root.resolve()
+        admission_overrides = _manual_admission_overrides(new_kb_root)
+        new_documents = [
+            ("new_kb", path, new_kb_root, ingest_document(path, new_kb_root, corpus_version, metadata_suggester, source_collection="new_kb", admission_overrides=admission_overrides))
+            for path in sorted(new_kb_root.rglob("*.md")) if path.is_file()
+        ]
+    if new_kb_root is not None and not new_documents:
+        raise ValueError(f"new knowledge root has no Markdown sources: {new_kb_root}")
+    by_document = original_documents + new_documents
     counts = {
-        path.relative_to(root).as_posix(): len(chunks)
-        for path, chunks in by_document
+        path.relative_to(document_root).as_posix(): len(chunks)
+        for collection, path, document_root, chunks in original_documents
     }
     manifest = build_manifest(corpus_version, chunk_counts=counts, root=root)
+    manifest["collections"] = {
+        "original": {"source_root": root.as_posix(), "document_count": len(original_documents)},
+        "new_kb": {"source_root": new_kb_root.as_posix(), "document_count": len(new_documents)} if new_kb_root else None,
+    }
     errors = validate_manifest(manifest, root)
     if errors:
         raise ValueError("corpus validation failed: " + "; ".join(errors))
-    chunks = [chunk for _, document_chunks in by_document for chunk in document_chunks]
+    chunks = [chunk for _, _, _, document_chunks in by_document for chunk in document_chunks]
     missing = {
         field: sum(not getattr(record.chunk, field) for record in chunks)
         for field in SUGGESTED_METADATA_FIELDS
@@ -202,6 +284,10 @@ def build_corpus(
         chunker_version=chunker_version,
         document_count=len(by_document),
         chunk_count=total,
+        collection_document_counts={collection: sum(1 for item in by_document if item[0] == collection) for collection in ("original", "new_kb")},
+        collection_chunk_counts={collection: sum(1 for item in chunks if item.chunk.source_collection == collection) for collection in ("original", "new_kb")},
+        usage_scope_counts={scope: sum(1 for item in chunks if item.chunk.usage_scope == scope) for scope in ("online_eligible", "research_only")},
+        review_status_counts={status: sum(1 for item in chunks if item.chunk.review_status == status) for status in ("approved", "draft", "rejected", "deprecated")},
         missing_metadata=missing,
         missing_metadata_ratios={
             field: count / total if total else 0.0
@@ -257,6 +343,10 @@ def write_build_artifacts(build: CorpusBuild, output: Path) -> dict[str, Path]:
         "missing_metadata_ratios": build.report.missing_metadata_ratios,
         "metadata_suggestion_statuses": build.report.metadata_suggestion_statuses,
         "metadata_suggestion_ratios": build.report.metadata_suggestion_ratios,
+        "collection_document_counts": build.report.collection_document_counts,
+        "collection_chunk_counts": build.report.collection_chunk_counts,
+        "usage_scope_counts": build.report.usage_scope_counts,
+        "review_status_counts": build.report.review_status_counts,
     }
     artifacts = build_artifact_paths(output)
     _atomic_write(

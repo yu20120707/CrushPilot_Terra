@@ -87,7 +87,12 @@ class IngestionTests(unittest.TestCase):
             )
         )
         self.assertTrue(
-            all(item.chunk.review_status == "approved" for item in first.chunks)
+            all(
+                item.chunk.review_status == "approved"
+                and item.chunk.usage_scope == "online_eligible"
+                and item.chunk.source_collection == "original"
+                for item in first.chunks
+            )
         )
         self.assertTrue(
             all(
@@ -216,6 +221,39 @@ class IngestionTests(unittest.TestCase):
                     build.report.metadata_suggestion_statuses,
                     {"accepted": 0, "missing": 0, "invalid": 1},
                 )
+
+    def test_new_kb_is_fully_ingested_but_deterministically_admitted_or_isolated(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            new_root = root / "new"
+            new_root.mkdir()
+            (new_root / "healthy.md").write_text(
+                "# 健康沟通\n\n尊重边界，先共情并留出空间。", encoding="utf-8"
+            )
+            (new_root / "unsafe.md").write_text(
+                "# 控制对方\n\n用操控和羞辱让对方服从。", encoding="utf-8"
+            )
+            build = build_corpus("test-new", new_kb_root=new_root)
+            imported = [item.chunk for item in build.chunks if item.chunk.source_collection == "new_kb"]
+            self.assertEqual(len(imported), 2)
+            self.assertEqual({item.source_path for item in imported}, {"healthy.md", "unsafe.md"})
+            self.assertTrue(all(item.source_sha256 for item in imported))
+            online = next(item for item in imported if item.source_path == "healthy.md")
+            isolated = next(item for item in imported if item.source_path == "unsafe.md")
+            self.assertEqual((online.usage_scope, online.review_status), ("research_only", "draft"))
+            self.assertEqual((isolated.usage_scope, isolated.review_status), ("research_only", "draft"))
+            self.assertEqual(build.report.collection_chunk_counts["new_kb"], 2)
+            self.assertEqual(build.report.usage_scope_counts["research_only"], 2)
+
+    def test_new_kb_root_must_exist_and_contain_markdown(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            with self.assertRaisesRegex(ValueError, "new knowledge root is missing"):
+                build_corpus("missing", new_kb_root=root / "missing")
+            empty = root / "empty"
+            empty.mkdir()
+            with self.assertRaisesRegex(ValueError, "has no Markdown sources"):
+                build_corpus("empty", new_kb_root=empty)
 
     def test_required_empty_document_fails_build(self):
         with tempfile.TemporaryDirectory() as directory:

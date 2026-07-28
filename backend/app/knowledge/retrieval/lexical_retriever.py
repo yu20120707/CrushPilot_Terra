@@ -12,6 +12,8 @@ FILTER_SQL = {
         "COALESCE(c.metadata->'relationship_stages', '[]'::jsonb) ?| %s"
     ),
     "knowledge_type": "COALESCE(c.metadata->>'knowledge_type', '') = ANY(%s)",
+    "usage_scope": "c.usage_scope = ANY(%s)",
+    "source_collection": "c.source_collection = ANY(%s)",
 }
 
 
@@ -59,6 +61,8 @@ class LexicalRetriever:
                 f"""
                 SELECT c.id AS chunk_id, c.document_id, c.parent_section_id,
                        c.title, c.heading_path, c.content, c.metadata,
+                       c.usage_scope, c.source_collection, c.source_priority,
+                       c.decision_key, c.stance, c.supersedes_chunk_ids, c.admission_reason,
                        ts_rank_cd(c.search_vector, uq.query, 2)
                          + 1.5 * ts_rank_cd(c.search_vector, tq.query, 2)
                          + CASE
@@ -72,6 +76,7 @@ class LexicalRetriever:
                 CROSS JOIN to_tsquery('simple', %s) AS tq(query)
                 WHERE v.status = 'published'
                   AND c.review_status = 'approved'
+                  AND c.usage_scope = 'online_eligible'
                   AND (
                     c.search_vector @@ uq.query
                     OR c.search_vector @@ tq.query

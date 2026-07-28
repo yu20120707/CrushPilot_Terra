@@ -3,9 +3,6 @@ from pathlib import Path
 
 import yaml
 
-from app.knowledge.governance.corpus_version import CURRENT_CORPUS_VERSION
-
-
 class DeployConfigTests(unittest.TestCase):
     def test_corpus_is_published_before_ready_backend_and_frontend(self):
         root = Path(__file__).resolve().parents[2]
@@ -24,7 +21,7 @@ class DeployConfigTests(unittest.TestCase):
             "service_healthy",
         )
         self.assertIn("publish_corpus.py", " ".join(services["corpus-publisher"]["command"]))
-        default_version = f"${{CORPUS_VERSION:-{CURRENT_CORPUS_VERSION}}}"
+        default_version = "${CORPUS_VERSION:-2026.08.1}"
         self.assertEqual(
             services["backend"]["environment"]["CORPUS_VERSION"],
             default_version,

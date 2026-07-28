@@ -105,6 +105,7 @@ class SchemaAndRepositoryTests(unittest.TestCase):
             (
                 "[0.1,0.2,0.3]", "embed-v1", 3,
                 None, None, None, None, None, None, None, None,
+                None, None, None, None,
                 "[0.1,0.2,0.3]", 20,
             ),
         )

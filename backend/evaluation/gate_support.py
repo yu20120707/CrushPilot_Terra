@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import json
+import time
 from pathlib import Path
 from typing import Any
 
@@ -16,7 +17,14 @@ def atomic_json(path: Path, value: Any) -> None:
         json.dumps(value, ensure_ascii=False, indent=2) + "\n",
         encoding="utf-8",
     )
-    temp.replace(path)
+    for attempt in range(3):
+        try:
+            temp.replace(path)
+            return
+        except PermissionError:
+            if attempt == 2:
+                raise
+            time.sleep(0.05)
 
 
 def prepare_outputs(*paths: Path) -> None:

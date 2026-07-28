@@ -25,19 +25,32 @@ from .prompts import SAFETY_PROMPT, generation_system_prompt, scene_plan_prompt
 from .schemas import ChatResult, ChatState
 
 
-INPUT_UNSAFE_PATTERN = re.compile(
-    r"跟踪|尾随|蹲守|威胁|恐吓|强迫|逼迫|纠缠|骚扰|未成年|诈骗|冒充|灌醉|下药|偷拍"
+DANGEROUS_ACTION = (
+    r"跟踪|尾随|蹲守|威胁|恐吓|强迫|逼迫|纠缠|骚扰|诈骗|冒充|灌醉|下药|偷拍"
 )
+INPUT_UNSAFE_PATTERN = re.compile(rf"{DANGEROUS_ACTION}|未成年")
 MISSING_CONTEXT_PATTERN = re.compile(
-    r"没有前文|(?:没有|未)提供原话|没有具体行为|"
+    r"没有(?:前文|上下文)|(?:没有|没看到|未提供)原话|没有具体行为|"
     r"缺少(?:双方)?关系阶段|没有描述(?:具体)?冲突|"
     r"不知道(?:已经)?过去多久|不知道拒绝(?:了)?什么|"
     r"(?:没有|未)提供对方消息"
 )
-DANGEROUS_ADVICE_PATTERN = re.compile(
-    r"跟踪|尾随|蹲守|威胁|恐吓|强迫|逼迫|纠缠|骚扰|诈骗|冒充|灌醉|下药|偷拍"
+DANGEROUS_ADVICE_PATTERN = re.compile(DANGEROUS_ACTION)
+INPUT_CESSATION_PATTERN = re.compile(
+    rf"(?:停止|不再|不要|别再|避免|拒绝|放弃|摆脱)\s*"
+    rf"(?:继续|再次|再)?\s*(?:去)?\s*"
+    rf"(?:通过(?:小号|电话|短信|社交媒体|账号))?\s*"
+    rf"(?:对(?:她|他|对方|前任)的)?\s*"
+    rf"(?P<danger>{DANGEROUS_ACTION})"
 )
-NEGATED_PREFIX = re.compile(r"(?:不要|别|不应|避免|拒绝|禁止|不能|不可以).{0,10}$")
+CESSATION_PREFIX = re.compile(
+    r"^\s*(?:(?:前任|对方)要求(?:我)?不再联系[，,]\s*)?"
+    r"(?:我(?:需要|决定|想|会|必须|应该|要)|请|必须|应该|要)?\s*$"
+)
+CESSATION_SAFE_SUFFIX = re.compile(
+    r"^\s*(?:(?:她|他|对方|前任)(?:回家)?(?:的(?:行为|冲动))?"
+    r"|(?:这种|上述)?行为|的冲动)?\s*[。！？]?\s*$"
+)
 SCENE_POLICY_IDS = ("explicit_rejection", "emotional_support", "insufficient_information")
 ALLOWED_HARD_FILTERS = {
     "review_status",
@@ -58,10 +71,26 @@ def safe_result(intent: str = "边界风险") -> ChatResult:
 
 
 def contains_unsafe_advice(text: str) -> bool:
-    return any(
-        not NEGATED_PREFIX.search(text[max(0, match.start() - 16) : match.start()])
-        for match in DANGEROUS_ADVICE_PATTERN.finditer(text)
-    )
+    return DANGEROUS_ADVICE_PATTERN.search(text) is not None
+
+
+def contains_unsafe_input(text: str) -> bool:
+    if "未成年" in text:
+        return True
+    dangerous = list(DANGEROUS_ADVICE_PATTERN.finditer(text))
+    if len(dangerous) != 1:
+        return bool(dangerous)
+    danger = dangerous[0]
+    for cessation in INPUT_CESSATION_PATTERN.finditer(text):
+        if cessation.span("danger") != danger.span():
+            continue
+        prefix = CESSATION_PREFIX.fullmatch(text[: cessation.start()])
+        if prefix is None:
+            continue
+        if CESSATION_SAFE_SUFFIX.fullmatch(text[danger.end() :]) is None:
+            continue
+        return False
+    return True
 
 
 def validate_result(result: ChatResult, intent: str) -> ChatResult:
@@ -152,7 +181,8 @@ class AssistantNodes:
     def analyze_scene_and_plan(self, state: ChatState) -> ChatState:
         started = perf_counter()
         context = ConversationContext.model_validate(state["conversation_context"])
-        if INPUT_UNSAFE_PATTERN.search(context.current_message):
+        unsafe_input = contains_unsafe_input(context.current_message)
+        if unsafe_input:
             plan = _unsafe_plan(context.current_message)
         elif self.demo_mode:
             plan = _demo_plan(context.current_message)
@@ -180,10 +210,19 @@ class AssistantNodes:
                 for scene_id in plan.scene.active_skill_scenarios
                 if scene_id in skill.scene_policies
             ]
-            if "explicit_rejection" in active:
+            if (
+                "explicit_rejection" in active
+                and plan.scene.task_type != "relationship_exit"
+            ):
                 plan.scene.task_type = "boundary"
                 plan.scene.recommended_action = "stop"
-            elif MISSING_CONTEXT_PATTERN.search(context.current_message):
+            elif (
+                "insufficient_information" in active
+                or (
+                    not active
+                    and MISSING_CONTEXT_PATTERN.search(context.current_message)
+                )
+            ):
                 active = ["insufficient_information"]
                 plan.scene.task_type = "general_advice"
                 plan.scene.recommended_action = "clarify"
@@ -193,10 +232,33 @@ class AssistantNodes:
             excluded = list(plan.retrieval.excluded_topics)
             required = [topic for topic in required if topic in CONTROLLED_TOPICS]
             excluded = [topic for topic in excluded if topic in CONTROLLED_TOPICS]
+            excluded = list(dict.fromkeys(excluded))
+            model_excluded = set(excluded)
+            required = [
+                topic for topic in dict.fromkeys(required) if topic not in model_excluded
+            ]
+            policy_required: list[str] = []
+            policy_excluded: list[str] = []
             for scene_id in active:
                 policy = skill.scene_policies[scene_id]
-                required.extend(policy.get("required_topics", []))
-                excluded.extend(policy.get("excluded_topics", []))
+                policy_required.extend(policy.get("required_topics", []))
+                policy_excluded.extend(policy.get("excluded_topics", []))
+            policy_required = list(dict.fromkeys(policy_required))
+            policy_excluded = list(dict.fromkeys(policy_excluded))
+            policy_overlap = set(policy_required) & set(policy_excluded)
+            if policy_overlap:
+                raise ValueError(
+                    f"skill policy topics cannot be both required and excluded: "
+                    f"{sorted(policy_overlap)}"
+                )
+            required = [
+                topic for topic in required if topic not in set(policy_excluded)
+            ]
+            excluded = [
+                topic for topic in excluded if topic not in set(policy_required)
+            ]
+            required.extend(policy_required)
+            excluded.extend(policy_excluded)
             plan.scene.active_skill_scenarios = active
             plan.retrieval.required_topics = list(dict.fromkeys(required))
             plan.retrieval.excluded_topics = list(dict.fromkeys(excluded))
@@ -209,7 +271,7 @@ class AssistantNodes:
                 and all(isinstance(item, str) and item for item in value)
             }
             plan.retrieval.hard_filters["review_status"] = ["approved"]
-        if self.demo_mode or INPUT_UNSAFE_PATTERN.search(context.current_message):
+        if self.demo_mode or unsafe_input:
             self.metrics.observe(
                 "scene_analysis_latency_ms", (perf_counter() - started) * 1000
             )
@@ -243,7 +305,7 @@ class AssistantNodes:
 
     def generate_answer(self, state: ChatState) -> ChatState:
         plan = SceneAndRetrievalPlan.model_validate(state["scene_and_retrieval_plan"])
-        if INPUT_UNSAFE_PATTERN.search(state["user_message"]):
+        if contains_unsafe_input(state["user_message"]):
             result = safe_result(plan.scene.task_type)
         elif self.demo_mode:
             result = ChatResult(

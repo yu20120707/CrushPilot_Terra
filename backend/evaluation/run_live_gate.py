@@ -132,10 +132,18 @@ def main() -> None:
             chunks = state.get("evidence_chunks", [])
             ranked = [chunk["chunk_id"] for chunk in chunks]
             plan = state["scene_and_retrieval_plan"]
+            retrieval_plan = plan["retrieval"]
             predictions[case["id"]] = {
                 "retrieved_chunks": retrieved,
                 "ranked_chunks": ranked,
                 "baseline_ranked_chunks": retrieved,
+                "queries": retrieval_plan.get("queries", []),
+                "required_topics": retrieval_plan["required_topics"],
+                "optional_topics": retrieval_plan.get("optional_topics", []),
+                "excluded_topics": retrieval_plan.get("excluded_topics", []),
+                "active_skill_scenarios": plan["scene"].get(
+                    "active_skill_scenarios", []
+                ),
                 "topics": sorted(
                     {
                         topic

@@ -78,10 +78,17 @@ def run_cases(cases: list[dict], runtime: object, partial_output: Path) -> dict:
             state.update(runtime.nodes.build_context(state))
             state.update(runtime.nodes.analyze_scene_and_plan(state))
         plan = state["scene_and_retrieval_plan"]
+        retrieval = plan["retrieval"]
         predictions[case["id"]] = {
-            "required_topics": plan["retrieval"]["required_topics"],
+            "queries": retrieval.get("queries", []),
+            "required_topics": retrieval["required_topics"],
+            "optional_topics": retrieval.get("optional_topics", []),
+            "excluded_topics": retrieval.get("excluded_topics", []),
             "task_type": plan["scene"]["task_type"],
             "action_direction": plan["scene"]["recommended_action"],
+            "active_skill_scenarios": plan["scene"].get(
+                "active_skill_scenarios", []
+            ),
         }
         atomic_json(partial_output, predictions)
         print(f"case_done={index}/{len(cases)} id={case['id']}", flush=True)

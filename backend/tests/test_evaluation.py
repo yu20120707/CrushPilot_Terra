@@ -8,6 +8,7 @@ from types import SimpleNamespace
 from unittest.mock import patch
 
 from evaluation.gate_support import (
+    atomic_json,
     build_runtime_state,
     prepare_outputs,
     publish_outputs,
@@ -96,8 +97,14 @@ class OfflineEvaluationTests(unittest.TestCase):
                     "scene": {
                         "task_type": "reply",
                         "recommended_action": "respond",
+                        "active_skill_scenarios": ["explicit_rejection"],
                     },
-                    "retrieval": {"required_topics": ["boundary"]},
+                    "retrieval": {
+                        "queries": ["respect the rejection"],
+                        "required_topics": ["boundary"],
+                        "optional_topics": [],
+                        "excluded_topics": ["aggressive_pursuit"],
+                    },
                 }
             }
 
@@ -111,6 +118,14 @@ class OfflineEvaluationTests(unittest.TestCase):
                 run_cases(cases, runtime, partial)
             saved = json.loads(partial.read_text(encoding="utf-8"))
             self.assertEqual(list(saved), ["one"])
+            self.assertEqual(saved["one"]["queries"], ["respect the rejection"])
+            self.assertEqual(
+                saved["one"]["excluded_topics"], ["aggressive_pursuit"]
+            )
+            self.assertEqual(
+                saved["one"]["active_skill_scenarios"],
+                ["explicit_rejection"],
+            )
 
     def test_prepare_outputs_removes_stale_gate_artifacts(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -119,6 +134,62 @@ class OfflineEvaluationTests(unittest.TestCase):
                 path.write_text("stale", encoding="utf-8")
             prepare_outputs(*paths)
             self.assertTrue(all(not path.exists() for path in paths))
+
+    def test_atomic_json_retries_transient_permission_error(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "output.json"
+            original_replace = Path.replace
+            attempts = 0
+
+            def replace(path, target):
+                nonlocal attempts
+                attempts += 1
+                if attempts == 1:
+                    raise PermissionError("temporarily locked")
+                return original_replace(path, target)
+
+            with patch.object(Path, "replace", autospec=True, side_effect=replace):
+                with patch("evaluation.gate_support.time.sleep") as sleep:
+                    atomic_json(output, {"complete": True})
+
+            self.assertEqual(attempts, 2)
+            sleep.assert_called_once_with(0.05)
+            self.assertEqual(
+                json.loads(output.read_text(encoding="utf-8")),
+                {"complete": True},
+            )
+
+    def test_atomic_json_reraises_after_three_permission_errors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "output.json"
+            with patch.object(
+                Path,
+                "replace",
+                autospec=True,
+                side_effect=PermissionError("locked"),
+            ) as replace:
+                with patch("evaluation.gate_support.time.sleep") as sleep:
+                    with self.assertRaises(PermissionError):
+                        atomic_json(output, {})
+
+            self.assertEqual(replace.call_count, 3)
+            self.assertEqual(sleep.call_count, 2)
+
+    def test_atomic_json_does_not_retry_other_os_errors(self):
+        with tempfile.TemporaryDirectory() as directory:
+            output = Path(directory) / "output.json"
+            with patch.object(
+                Path,
+                "replace",
+                autospec=True,
+                side_effect=OSError("disk full"),
+            ) as replace:
+                with patch("evaluation.gate_support.time.sleep") as sleep:
+                    with self.assertRaises(OSError):
+                        atomic_json(output, {})
+
+            replace.assert_called_once()
+            sleep.assert_not_called()
 
     def test_latency_summary_reports_nearest_rank_p50_and_p95(self):
         self.assertEqual(

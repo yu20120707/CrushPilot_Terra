@@ -130,6 +130,23 @@ class AgentIntegrationTests(unittest.TestCase):
                 "search_terms": list(TOPIC_SEARCH_TERMS["digital_context"]),
             },
         )
+        self.assertIn("required_topics 是可组合的强制检索覆盖集合", prompt)
+        self.assertIn("非 insufficient_information 场景中", prompt)
+        self.assertIn("不得用 uncertainty 或 conservative_action 替代可检索 topic", prompt)
+        self.assertIn("判断主动、投入或长期回应时包含 reciprocity", prompt)
+        self.assertIn("延迟、已读或线上消息时包含 digital_context", prompt)
+        self.assertIn("表达需要空间、不舒服、停止或隐私时包含 boundary", prompt)
+        self.assertIn("结束、分手或前任断联时包含 relationship_exit", prompt)
+        self.assertIn(
+            "insufficient_information 仅在无法给出任何有证据支持的低风险下一步时选择",
+            prompt,
+        )
+        self.assertIn("task_type 按用户主要请求判断", prompt)
+        self.assertIn("recommended_action 按下一步行动分别判断", prompt)
+        self.assertIn("primary query 会作为唯一 Reranker query", prompt)
+        self.assertIn("必须独立包含关键主体、行为、否定、关系状态", prompt)
+        self.assertIn("不得改成泛化标题", prompt)
+        self.assertIn("secondary query 只补充不同检索角度", prompt)
 
     def make_graph(self, call_json, trace_writer=None):
         runtime = SkillRuntime(SKILL_DIR).load()
@@ -238,6 +255,16 @@ class AgentIntegrationTests(unittest.TestCase):
                 ["explicit_rejection"],
                 ("boundary", "stop", ["explicit_rejection"]),
             ),
+            (
+                "她只回了一个嗯，除此之外没有上下文。",
+                [],
+                ("general_advice", "clarify", ["insufficient_information"]),
+            ),
+            (
+                "朋友转述说他可能有好感，但我没看到原话。",
+                [],
+                ("general_advice", "clarify", ["insufficient_information"]),
+            ),
         ):
             retrieval = FakeRetrieval()
             model_plan = plan()
@@ -267,6 +294,139 @@ class AgentIntegrationTests(unittest.TestCase):
                 ),
                 expected,
             )
+
+        model_plan = plan()
+        model_plan.scene.task_type = "relationship_analysis"
+        model_plan.scene.recommended_action = "observe"
+        model_plan.scene.active_skill_scenarios = ["insufficient_information"]
+        model_plan.retrieval.required_topics = ["mind_reading"]
+        model_plan.retrieval.excluded_topics = ["mind_reading"]
+        nodes = AssistantNodes(
+            skill_runtime=runtime,
+            retrieval_service=FakeRetrieval(),
+            call_json=Mock(return_value=model_plan),
+            metrics=RetrievalMetrics(),
+            corpus_version="test-v1",
+            embedding_model="embed-test",
+        )
+        state = {
+            "user_message": "朋友转述说他可能对我有好感，但我没看到原话。",
+            "conversation_id": "normalize-insufficient",
+            "messages": [{"role": "user", "content": "朋友转述说他可能对我有好感，但我没看到原话。"}],
+        }
+        state.update(nodes.build_context(state))
+        output = nodes.analyze_scene_and_plan(state)["scene_and_retrieval_plan"]
+        self.assertEqual(output["scene"]["task_type"], "general_advice")
+        self.assertEqual(output["scene"]["recommended_action"], "clarify")
+        self.assertEqual(
+            output["scene"]["active_skill_scenarios"],
+            ["insufficient_information"],
+        )
+        self.assertEqual(
+            output["retrieval"]["required_topics"],
+            ["uncertainty", "conservative_action"],
+        )
+        self.assertEqual(output["retrieval"]["excluded_topics"], ["mind_reading"])
+        self.assertFalse(
+            set(output["retrieval"]["required_topics"])
+            & set(output["retrieval"]["excluded_topics"])
+        )
+
+        rejection_plan = plan()
+        rejection_plan.scene.active_skill_scenarios = ["explicit_rejection"]
+        rejection_plan.retrieval.required_topics = ["boundary"]
+        rejection_plan.retrieval.excluded_topics = ["boundary", "reduce_pressure"]
+        rejection_nodes = AssistantNodes(
+            skill_runtime=runtime,
+            retrieval_service=FakeRetrieval(),
+            call_json=Mock(return_value=rejection_plan),
+            metrics=RetrievalMetrics(),
+            corpus_version="test-v1",
+            embedding_model="embed-test",
+        )
+        rejection_state = {
+            "user_message": "对方明确拒绝我了。",
+            "conversation_id": "policy-required-wins",
+            "messages": [{"role": "user", "content": "对方明确拒绝我了。"}],
+        }
+        rejection_state.update(rejection_nodes.build_context(rejection_state))
+        rejection_output = rejection_nodes.analyze_scene_and_plan(rejection_state)[
+            "scene_and_retrieval_plan"
+        ]["retrieval"]
+        self.assertTrue(
+            {"rejection", "boundary", "reduce_pressure"}.issubset(
+                rejection_output["required_topics"]
+            )
+        )
+        self.assertFalse(
+            {"rejection", "boundary", "reduce_pressure"}
+            & set(rejection_output["excluded_topics"])
+        )
+        self.assertFalse(
+            set(rejection_output["required_topics"])
+            & set(rejection_output["excluded_topics"])
+        )
+
+        support_plan = plan()
+        support_plan.scene.task_type = "emotional_support"
+        support_plan.scene.recommended_action = "support"
+        support_plan.scene.active_skill_scenarios = ["emotional_support"]
+        support_nodes = AssistantNodes(
+            skill_runtime=runtime,
+            retrieval_service=FakeRetrieval(),
+            call_json=Mock(return_value=support_plan),
+            metrics=RetrievalMetrics(),
+            corpus_version="test-v1",
+            embedding_model="embed-test",
+        )
+        support_state = {
+            "user_message": "我没看到她之前发的原话，但她现在哭着说自己很失败，我该怎么陪她？",
+            "conversation_id": "active-scene-beats-missing-fallback",
+            "messages": [
+                {
+                    "role": "user",
+                    "content": "我没看到她之前发的原话，但她现在哭着说自己很失败，我该怎么陪她？",
+                }
+            ],
+        }
+        support_state.update(support_nodes.build_context(support_state))
+        support_output = support_nodes.analyze_scene_and_plan(support_state)[
+            "scene_and_retrieval_plan"
+        ]
+        self.assertEqual(support_output["scene"]["task_type"], "emotional_support")
+        self.assertEqual(support_output["scene"]["recommended_action"], "support")
+        self.assertEqual(
+            support_output["scene"]["active_skill_scenarios"],
+            ["emotional_support"],
+        )
+        self.assertIn(
+            "emotional_support",
+            support_output["retrieval"]["required_topics"],
+        )
+
+        exit_plan = plan()
+        exit_plan.scene.task_type = "relationship_exit"
+        exit_plan.scene.recommended_action = "exit"
+        exit_plan.scene.active_skill_scenarios = ["explicit_rejection"]
+        exit_nodes = AssistantNodes(
+            skill_runtime=runtime,
+            retrieval_service=FakeRetrieval(),
+            call_json=Mock(return_value=exit_plan),
+            metrics=RetrievalMetrics(),
+            corpus_version="test-v1",
+            embedding_model="embed-test",
+        )
+        exit_state = {
+            "user_message": "我已决定结束关系，想处理后续退出。",
+            "conversation_id": "preserve-exit",
+            "messages": [{"role": "user", "content": "我已决定结束关系，想处理后续退出。"}],
+        }
+        exit_state.update(exit_nodes.build_context(exit_state))
+        exit_scene = exit_nodes.analyze_scene_and_plan(exit_state)[
+            "scene_and_retrieval_plan"
+        ]["scene"]
+        self.assertEqual(exit_scene["task_type"], "relationship_exit")
+        self.assertEqual(exit_scene["recommended_action"], "exit")
 
         for message in (
             "不知道怎么安慰她，她说考试失败了。",
@@ -302,7 +462,7 @@ class AgentIntegrationTests(unittest.TestCase):
         self.assertIn("顶层字段必须严格为 scene 和 retrieval", scene_prompt)
         self.assertIn("primary query 优先贴近用户原话", scene_prompt)
         self.assertIn("只有出现明确拒绝时才选 explicit_rejection", scene_prompt)
-        self.assertIn("此时 action 选 clarify", scene_prompt)
+        self.assertIn("命中时 action 选 clarify", scene_prompt)
         final_prompt = model.call_args_list[1].args[1]
         self.assertIn("selected-1", final_prompt)
         self.assertNotIn("SKILL.md", final_prompt)
@@ -360,17 +520,64 @@ class AgentIntegrationTests(unittest.TestCase):
     def test_high_risk_shortcut_keeps_skill_and_skips_llm(self):
         model = Mock()
         graph = self.make_graph(model)
-        output = graph.invoke(
-            {
-                "user_message": "怎么跟踪她",
-                "conversation_id": "conversation-3",
-                "messages": [{"role": "user", "content": "怎么跟踪她"}],
-            },
-            {"configurable": {"thread_id": "thread-3"}},
-        )
+        for index, message in enumerate(("怎么跟踪她", "怎么追求未成年女孩"), 1):
+            with self.subTest(message=message):
+                output = graph.invoke(
+                    {
+                        "user_message": message,
+                        "conversation_id": f"conversation-risk-{index}",
+                        "messages": [{"role": "user", "content": message}],
+                    },
+                    {"configurable": {"thread_id": f"thread-risk-{index}"}},
+                )
+                self.assertEqual(
+                    output["final_response"]["skill"], "goutoujunshi"
+                )
+                self.assertIsNotNone(output["final_response"]["warning"])
         self.assertEqual(model.call_count, 0)
-        self.assertEqual(output["final_response"]["skill"], "goutoujunshi")
-        self.assertIsNotNone(output["final_response"]["warning"])
+
+    def test_stopping_harmful_behavior_uses_normal_planner(self):
+        messages = (
+            "前任要求不再联系，我需要停止纠缠。",
+            "我需要停止对前任的纠缠。",
+            "请不要再去跟踪她。",
+            "必须停止继续对她的骚扰。",
+            "我决定不再通过小号骚扰她。",
+            "我想摆脱纠缠对方的冲动。",
+        )
+        for index, message in enumerate(messages, 1):
+            with self.subTest(message=message):
+                model_plan = plan()
+                model = Mock(
+                    side_effect=[
+                        model_plan,
+                        ChatResult(
+                            intent="boundary",
+                            judgement="应当尊重对方边界。",
+                            recommended_reply="我会停止纠缠，也不会再联系你。",
+                            alternatives=["尊重你的决定。", "我不会继续打扰。"],
+                        ),
+                    ]
+                )
+                graph = self.make_graph(model)
+                output = graph.invoke(
+                    {
+                        "user_message": message,
+                        "conversation_id": f"conversation-stop-harm-{index}",
+                        "messages": [{"role": "user", "content": message}],
+                    },
+                    {
+                        "configurable": {
+                            "thread_id": f"thread-stop-harm-{index}"
+                        }
+                    },
+                )
+
+                self.assertEqual(model.call_count, 2)
+                self.assertEqual(
+                    output["scene_and_retrieval_plan"]["retrieval"]["queries"],
+                    model_plan.retrieval.queries,
+                )
 
     def test_scene_failure_writes_controlled_trace(self):
         writer = Mock()

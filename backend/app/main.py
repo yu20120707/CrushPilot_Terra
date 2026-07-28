@@ -26,6 +26,7 @@ from .knowledge.governance.corpus_version import CURRENT_CORPUS_VERSION, CorpusV
 from .knowledge.observability.metrics import RetrievalMetrics
 from .knowledge.repositories.postgres import PostgresKnowledgeRepository
 from .knowledge.retrieval.lexical_retriever import LexicalRetriever
+from .knowledge.retrieval.local_json import LocalJsonRetrievalService
 from .knowledge.retrieval.reranker import RerankerUnavailable
 from .knowledge.retrieval.service import RetrievalResult, RetrievalService
 from .knowledge.retrieval.vector_retriever import VectorRetriever, VectorUnavailable
@@ -37,6 +38,7 @@ KNOWLEDGE_DIR = ROOT / "knowledge"
 DATA_DIR = Path(os.getenv("DATA_DIR", ROOT / "data"))
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 DEMO_MODE = os.getenv("DEMO_MODE", "false").lower() == "true"
+LOCAL_SQLITE_MODE = os.getenv("LOCAL_SQLITE_MODE", "false").lower() == "true"
 DATABASE_URL = os.getenv("DATABASE_URL", "")
 MODEL_PROVIDER = os.getenv("MODEL_PROVIDER", "custom").lower()
 _PROVIDER_PREFIX = {"deepseek": "DEEPSEEK", "longxia": "LONGXIA"}.get(MODEL_PROVIDER, "MODEL")
@@ -75,6 +77,7 @@ def model_payload(system: str, user: str) -> dict[str, Any]:
         ],
         "response_format": {"type": "json_object"},
         "thinking": {"type": "disabled"},
+        "temperature": 0,
     }
 
 
@@ -176,7 +179,7 @@ metrics = RetrievalMetrics()
 skill_runtime = SkillRuntime(SKILL_DIR)
 _readiness_errors: list[str] = []
 _postgres_ready = DEMO_MODE
-_corpus_ready = DEMO_MODE
+_corpus_ready = DEMO_MODE or LOCAL_SQLITE_MODE
 try:
     skill_runtime.load()
 except Exception as exc:
@@ -243,8 +246,12 @@ def _production_dependencies() -> tuple[object, object, ThreadStore]:
     return retrieval, checkpointer, ThreadStore(database_url, DATA_DIR)
 
 
-if DEMO_MODE:
-    retrieval_service: object = DemoRetrievalService()
+if DEMO_MODE or LOCAL_SQLITE_MODE:
+    retrieval_service: object = (
+        LocalJsonRetrievalService(DATA_DIR / "knowledge_vectors.json")
+        if LOCAL_SQLITE_MODE
+        else DemoRetrievalService()
+    )
     checkpointer: object = SqliteSaver(
         sqlite3.connect(DATA_DIR / "checkpoints.sqlite", check_same_thread=False)
     )
@@ -265,8 +272,8 @@ nodes = AssistantNodes(
     call_json=call_json,
     metrics=metrics,
     corpus_version=CORPUS_VERSION,
-    embedding_model=None if DEMO_MODE else EMBEDDING_MODEL,
-    trace_writer=None if DEMO_MODE else getattr(retrieval_service, "trace_writer", None),
+    embedding_model=None if (DEMO_MODE or LOCAL_SQLITE_MODE) else EMBEDDING_MODEL,
+    trace_writer=None if (DEMO_MODE or LOCAL_SQLITE_MODE) else getattr(retrieval_service, "trace_writer", None),
     demo_mode=DEMO_MODE,
 )
 graph = build_assistant_graph(nodes, checkpointer)
@@ -292,7 +299,7 @@ def ready(response: Response) -> dict[str, Any]:
         response.status_code = 503
     return {
         "ready": not _readiness_errors,
-        "mode": "demo" if DEMO_MODE else "production",
+        "mode": "demo" if DEMO_MODE else ("local_sqlite" if LOCAL_SQLITE_MODE else "production"),
         "skill": skill_runtime.readiness().ready,
         "corpus": _corpus_ready,
         "postgres": _postgres_ready,
@@ -361,6 +368,18 @@ def list_threads(owner_id: str = Depends(device_id)) -> list[dict[str, str]]:
         {"thread_id": thread_id, "title": title}
         for thread_id, title in thread_store.list_for_owner(owner_id)
     ]
+
+
+@app.get("/api/v1/local-traces/{thread_id}")
+def local_trace(thread_id: str, owner_id: str = Depends(device_id)) -> dict[str, Any]:
+    if not thread_store.owns(thread_id, owner_id):
+        raise HTTPException(status_code=404, detail="会话不存在")
+    if not LOCAL_SQLITE_MODE or not isinstance(retrieval_service, LocalJsonRetrievalService):
+        raise HTTPException(status_code=404, detail="本地检索追踪不可用")
+    trace = retrieval_service.trace_for(thread_id)
+    if trace is None:
+        raise HTTPException(status_code=404, detail="尚无检索追踪")
+    return trace
 
 
 @app.get("/api/v1/threads/{thread_id}")

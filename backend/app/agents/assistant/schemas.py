@@ -4,6 +4,8 @@ from typing import Annotated, Any, Literal, TypedDict
 
 from pydantic import BaseModel, Field
 
+ReplyStyle = Literal["暧昧", "稳重", "激进"]
+
 
 class ChatResult(BaseModel):
     skill: Literal["goutoujunshi"] = "goutoujunshi"
@@ -12,6 +14,10 @@ class ChatResult(BaseModel):
     recommended_reply: str = Field(min_length=1, max_length=1000)
     alternatives: list[Annotated[str, Field(min_length=1, max_length=1000)]] = Field(
         min_length=2, max_length=2
+    )
+    primary_style: ReplyStyle = "稳重"
+    alternative_styles: list[ReplyStyle] = Field(
+        default_factory=lambda: ["暧昧", "激进"], min_length=2, max_length=2
     )
     warning: str | None = Field(default=None, max_length=500)
 

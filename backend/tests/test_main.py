@@ -196,6 +196,43 @@ class CrushPilotTests(unittest.TestCase):
             safe_result("测试").recommended_reply,
         )
 
+    def test_validate_result_caps_all_displayed_text_at_twenty_characters(self):
+        generated = ChatResult(
+            intent="测试",
+            judgement="这是第一句。后面这句不该保留。",
+            recommended_reply="是我欠考虑，让你难堪了。以后你的事我先问你。",
+            alternatives=["我知道你会不舒服，以后我会注意。", "这件事我确实没有想周全。"],
+            warning="别急着解释当时的理由，先接住对方。",
+        )
+
+        result = validate_result(generated, "回复")
+
+        self.assertEqual(result.recommended_reply, "是我欠考虑，让你难堪了。")
+        self.assertTrue(
+            all(
+                len(text) <= 20
+                for text in [
+                    result.judgement,
+                    result.recommended_reply,
+                    *result.alternatives,
+                    result.warning or "",
+                ]
+            )
+        )
+
+    def test_reply_styles_are_backward_compatible_and_safe_fallback_is_steady(self):
+        result = ChatResult(
+            intent="回复",
+            judgement="判断",
+            recommended_reply="收到。",
+            alternatives=["明白。", "好。"],
+        )
+
+        self.assertEqual(result.primary_style, "稳重")
+        self.assertEqual(result.alternative_styles, ["暧昧", "激进"])
+        self.assertEqual(safe_result().primary_style, "稳重")
+        self.assertEqual(safe_result().alternative_styles, ["稳重", "稳重"])
+
     def test_model_retries_transport_error_then_succeeds(self):
         schema = ChatResult(
             intent="reply",

@@ -16,6 +16,20 @@ class DeployConfigTests(unittest.TestCase):
             "service_completed_successfully",
         )
         self.assertIn("/ready", " ".join(services["backend"]["healthcheck"]["test"]))
+        self.assertEqual(services["backend"]["healthcheck"]["start_period"], "10m")
+        self.assertIn(
+            "huggingface_cache:/root/.cache/huggingface",
+            services["backend"]["volumes"],
+        )
+        self.assertIn(
+            "huggingface_cache:/root/.cache/huggingface",
+            services["corpus-publisher"]["volumes"],
+        )
+        self.assertEqual(services["backend"]["environment"]["HF_HUB_DISABLE_XET"], "1")
+        self.assertEqual(
+            services["corpus-publisher"]["environment"]["HF_HUB_DISABLE_XET"],
+            "1",
+        )
         self.assertEqual(
             services["frontend"]["depends_on"]["backend"]["condition"],
             "service_healthy",

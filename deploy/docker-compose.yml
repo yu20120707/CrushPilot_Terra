@@ -30,6 +30,7 @@ services:
       CHUNKER_VERSION: ${CHUNKER_VERSION:-heading-semantic-v1}
       ALLOW_LEXICAL_ONLY_STARTUP: ${ALLOW_LEXICAL_ONLY_STARTUP:-false}
       TRACE_DEBUG: ${TRACE_DEBUG:-false}
+      HF_HUB_DISABLE_XET: "1"
       DEEPSEEK_BASE_URL: ${DEEPSEEK_BASE_URL}
       DEEPSEEK_API_KEY: ${DEEPSEEK_API_KEY}
       DEEPSEEK_MODEL: ${DEEPSEEK_MODEL}
@@ -43,11 +44,13 @@ services:
         condition: service_completed_successfully
     volumes:
       - backend_data:/data
+      - huggingface_cache:/root/.cache/huggingface
     healthcheck:
       test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/ready')"]
       interval: 10s
       timeout: 5s
       retries: 12
+      start_period: 10m
 
   corpus-publisher:
     build:
@@ -68,11 +71,13 @@ services:
       - /app/knowledge/pua-knowledge-sharing
     environment:
       PGPASSWORD: ${POSTGRES_PASSWORD}
+      HF_HUB_DISABLE_XET: "1"
     depends_on:
       postgres:
         condition: service_healthy
     volumes:
       - backend_data:/data
+      - huggingface_cache:/root/.cache/huggingface
 
   frontend:
     build:
@@ -86,3 +91,4 @@ services:
 volumes:
   postgres_data:
   backend_data:
+  huggingface_cache:

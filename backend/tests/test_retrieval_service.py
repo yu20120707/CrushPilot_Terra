@@ -257,7 +257,7 @@ class RetrievalServiceTests(unittest.TestCase):
 
     def test_new_kb_suppresses_conflicting_original_but_not_better_matched_original(self):
         newer = chunk("new", content="new stance")
-        newer.update({"source_collection": "new_kb", "source_priority": 100, "decision_key": "boundary", "stance": "new"})
+        newer.update({"source_collection": "new_kb", "source_priority": 100, "decision_key": "boundary", "stance": "new", "supersedes_chunk_ids": ["old"]})
         older = chunk("old", content="old stance")
         older.update({"source_collection": "original", "source_priority": 50, "decision_key": "boundary", "stance": "old"})
         values = {"primary": [newer, older], "secondary": []}

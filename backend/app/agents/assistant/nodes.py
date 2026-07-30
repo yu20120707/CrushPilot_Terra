@@ -58,15 +58,40 @@ ALLOWED_HARD_FILTERS = {
     "relationship_stages",
     "knowledge_type",
 }
+MAX_OUTPUT_CHARACTERS = 20
+
+
+def _shorten_output(text: str) -> str:
+    if len(text) <= MAX_OUTPUT_CHARACTERS:
+        return text
+    prefix = text[:MAX_OUTPUT_CHARACTERS]
+    for ending in "。！？；":
+        if (position := prefix.rfind(ending)) >= 4:
+            return prefix[: position + 1]
+    return prefix.rstrip("，、 ")
+
+
+def _compact_result(result: ChatResult, intent: str) -> ChatResult:
+    return result.model_copy(
+        update={
+            "intent": intent,
+            "judgement": _shorten_output(result.judgement),
+            "recommended_reply": _shorten_output(result.recommended_reply),
+            "alternatives": [_shorten_output(item) for item in result.alternatives],
+            "warning": _shorten_output(result.warning) if result.warning else None,
+        }
+    )
 
 
 def safe_result(intent: str = "边界风险") -> ChatResult:
     return ChatResult(
         intent=intent,
-        judgement="狗头军师判断：这类做法可能伤害对方或越过边界。",
-        recommended_reply="先尊重对方的意愿和边界，不要继续施压。",
-        alternatives=["如果对方不想继续，请给彼此一点空间。", "先冷静下来，再用尊重的方式沟通。"],
-        warning="不提供操控、骚扰、威胁、跟踪、欺骗、性越界或未成年人相关建议。",
+        judgement="这事可能越界。",
+        recommended_reply="先尊重对方，别再施压。",
+        alternatives=["对方不想继续，就停。", "先冷静，别越界。"],
+        primary_style="稳重",
+        alternative_styles=["稳重", "稳重"],
+        warning="不提供跟踪、骚扰等建议。",
     )
 
 
@@ -104,8 +129,8 @@ def validate_result(result: ChatResult, intent: str) -> ChatResult:
             ]
         )
     ):
-        return safe_result(intent)
-    return result.model_copy(update={"intent": intent})
+        return _compact_result(safe_result(intent), intent)
+    return _compact_result(result, intent)
 
 
 def _normalize_fact(value: str) -> str:

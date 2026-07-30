@@ -3,6 +3,7 @@ import os
 import shutil
 import tempfile
 import unittest
+from dataclasses import replace
 from pathlib import Path
 from unittest.mock import Mock, patch
 from uuid import uuid4
@@ -17,12 +18,15 @@ from fastapi.testclient import TestClient
 from app.main import (
     ChatResult,
     app,
-    call_json,
     contains_unsafe_advice,
+    create_app,
     safe_result,
     validate_result,
 )
 from app.agents.assistant.nodes import contains_unsafe_input
+from app.bootstrap.runtime import AppRuntime
+from app.core.config import Settings
+from app.infrastructure.model_client import OpenAICompatibleJsonClient
 
 
 class CrushPilotTests(unittest.TestCase):
@@ -34,6 +38,59 @@ class CrushPilotTests(unittest.TestCase):
         self.client = TestClient(app)
         self.device = str(uuid4())
         self.headers = {"X-Device-Id": self.device}
+
+    def tearDown(self):
+        self.client.close()
+        app.state.runtime.close()
+
+    def test_lifespan_starts_and_closes_runtime(self):
+        application = create_app()
+        with TestClient(application) as client:
+            self.assertEqual(client.get("/ready").status_code, 200)
+            self.assertTrue(application.state.runtime._started)
+        self.assertFalse(application.state.runtime._started)
+
+    def test_missing_production_dependencies_remain_observable_not_blocking(self):
+        settings = replace(
+            Settings.from_env(),
+            demo_mode=False,
+            local_sqlite_mode=False,
+            database_url="",
+            model_base_url="",
+            model_api_key="",
+            model_name="",
+        )
+        application = create_app(settings)
+        with TestClient(application) as client:
+            readiness = client.get("/ready")
+            self.assertEqual(readiness.status_code, 503)
+            self.assertFalse(readiness.json()["ready"])
+            response = client.post(
+                "/api/v1/chat",
+                headers={"X-Device-Id": str(uuid4())},
+                json={"thread_id": str(uuid4()), "message": "你好"},
+            )
+            self.assertEqual(response.status_code, 503)
+            self.assertEqual(response.json()["detail"], "服务尚未就绪")
+
+    def test_graph_build_failure_releases_started_resources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runtime = AppRuntime(
+                replace(
+                    Settings.from_env(),
+                    data_dir=Path(directory),
+                    demo_mode=True,
+                    local_sqlite_mode=False,
+                )
+            )
+            with patch(
+                "app.bootstrap.runtime.build_assistant_graph",
+                side_effect=RuntimeError("graph failed"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "graph failed"):
+                    runtime.start()
+            self.assertFalse(runtime._closers)
+            runtime.close()
 
     def test_health_readiness_and_metrics(self):
         self.assertEqual(self.client.get("/health").json(), {"status": "ok"})
@@ -246,21 +303,45 @@ class CrushPilotTests(unittest.TestCase):
         success.json.return_value = {
             "choices": [{"message": {"content": schema.model_dump_json()}}]
         }
+        settings = replace(
+            Settings.from_env(),
+            model_base_url="https://model.test",
+            model_api_key="key",
+            model_name="model",
+            model_trust_env=False,
+        )
         with (
-            patch("app.main.MODEL_BASE_URL", "https://model.test"),
-            patch("app.main.MODEL_API_KEY", "key"),
-            patch("app.main.MODEL_NAME", "model"),
-            patch("app.main.MODEL_TRUST_ENV", False),
             patch(
-                "app.main.httpx.post",
+                "app.infrastructure.model_client.httpx.post",
                 side_effect=[httpx.ConnectError("down", request=request), success],
             ) as post,
-            patch("app.main.time.sleep"),
+            patch("app.infrastructure.model_client.time.sleep"),
         ):
-            self.assertEqual(call_json("system", "user", ChatResult), schema)
+            self.assertEqual(
+                OpenAICompatibleJsonClient(settings).call_json("system", "user", ChatResult),
+                schema,
+            )
         self.assertEqual(post.call_count, 2)
         self.assertFalse(post.call_args.kwargs["trust_env"])
         self.assertEqual(post.call_args.kwargs["json"]["temperature"], 0)
+
+    def test_model_probe_requires_the_json_health_contract(self):
+        success = Mock()
+        success.raise_for_status.return_value = None
+        success.json.return_value = {
+            "choices": [{"message": {"content": '{"status":"ok"}'}}]
+        }
+        settings = replace(
+            Settings.from_env(),
+            model_base_url="https://model.test",
+            model_api_key="key",
+            model_name="model",
+        )
+        with patch(
+            "app.infrastructure.model_client.httpx.post", return_value=success
+        ) as post:
+            OpenAICompatibleJsonClient(settings).probe()
+        self.assertEqual(post.call_args.kwargs["json"]["messages"][1]["content"], "返回 JSON：{\"status\": \"ok\"}。")
 
     def test_removed_legacy_runtime_modules_are_absent(self):
         app_dir = Path(__file__).parents[1] / "app"

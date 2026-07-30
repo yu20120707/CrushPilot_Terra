@@ -9,7 +9,15 @@ from typing import Literal
 from pydantic import BaseModel, Field
 
 from .agents.assistant.prompts import SAFETY_PROMPT
-from .main import KNOWLEDGE_DIR, call_json
+from .core.config import Settings
+from .infrastructure.model_client import OpenAICompatibleJsonClient
+
+
+KNOWLEDGE_DIR = Settings.from_env().knowledge_dir
+
+
+def call_json(system: str, user: str, schema: type[BaseModel]) -> BaseModel:
+    return OpenAICompatibleJsonClient(Settings.from_env()).call_json(system, user, schema)
 
 
 class ResearchAnalysis(BaseModel):

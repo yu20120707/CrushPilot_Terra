@@ -14,6 +14,7 @@ if (-not $dockerCandidates) {
 }
 
 $docker = @($dockerCandidates)[0]
+$env:PATH = "$(Split-Path -Parent $docker);$env:PATH"
 $envFile = Join-Path $composeDir ".env"
 if (-not (Test-Path $envFile)) {
     throw "Missing deploy/.env. Copy .env.example and set the model configuration."

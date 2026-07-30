@@ -78,6 +78,7 @@ class RetrievalService:
         fallback_reasons: list[str] = []
 
         started = perf_counter()
+        # 词法与向量检索分开采样和计时；任一路径不可用时，另一条仍可提供可诊断的降级结果。
         for query in plan.queries:
             lexical.append(
                 self.lexical.search(
@@ -110,6 +111,7 @@ class RetrievalService:
         lexical = [isolate_bad_candidates(items) for items in lexical]
         vector = [isolate_bad_candidates(items) for items in vector]
         started = perf_counter()
+        # Weighted RRF 融合排名而非原始分数，避免不同检索器的分数尺度让单一路径主导。
         candidates = {
             item["chunk_id"]: item
             for results in lexical + vector
@@ -142,6 +144,7 @@ class RetrievalService:
                     limit=min(plan.rerank_top_k, 15),
                 )
             except Exception as exc:
+                # reranker 是精排增强，不是服务可用性的单点依赖；失败时回退融合排名。
                 logger.warning("reranker unavailable: %s", exc)
                 reranked = fused[: min(plan.rerank_top_k, 15)]
                 fallback_reasons.append("reranker_unavailable")
@@ -200,6 +203,7 @@ class RetrievalService:
             reranker_threshold=self.reranker_threshold,
         )
         if assessment.status == "insufficient":
+            # 证据不足时宁可不给知识片段，也不让生成层把低置信候选当作事实。
             budgeted = []
             assessment.selected_chunk_ids = []
         fallback_reason = ",".join(fallback_reasons) or None
@@ -229,6 +233,7 @@ class RetrievalService:
             try:
                 self.trace_writer.write_trace(trace.model_dump())
             except Exception as exc:
+                # 可观测性写入不可反向阻断用户回答；失败只记指标和日志。
                 logger.warning("retrieval trace write failed: %s", exc, exc_info=True)
                 if self.metrics is not None:
                     try:

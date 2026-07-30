@@ -189,6 +189,8 @@ class AssistantNodes:
         self.demo_mode = demo_mode
 
     def build_context(self, state: ChatState) -> ChatState:
+        # 只带最近窗口，防止历史无限增长挤占检索证据和最终回答的 token 预算；
+        # 更久的信息应由上层摘要或已确认事实承载。
         messages = [
             ConversationMessage.model_validate(message)
             for message in state.get("messages", [])[-12:]
@@ -208,6 +210,7 @@ class AssistantNodes:
         context = ConversationContext.model_validate(state["conversation_context"])
         unsafe_input = contains_unsafe_input(context.current_message)
         if unsafe_input:
+            # 高风险输入不交给模型分类，使用确定性计划避免生成链路放大越界意图。
             plan = _unsafe_plan(context.current_message)
         elif self.demo_mode:
             plan = _demo_plan(context.current_message)
@@ -230,6 +233,7 @@ class AssistantNodes:
                     "scene_analysis_latency_ms", (perf_counter() - started) * 1000
                 )
             _enforce_known_fact_provenance(plan, context)
+            # 模型可以建议场景，但 skill 的安全策略拥有最终约束权，不能被模型输出绕过。
             active = [
                 scene_id
                 for scene_id in plan.scene.active_skill_scenarios
@@ -307,6 +311,7 @@ class AssistantNodes:
         skill = self.skill_runtime.view(plan.scene.active_skill_scenarios)
         started = perf_counter()
         try:
+            # 检索 trace 与模型生成分别记录失败，便于区分“无证据”和“模型不可用”。
             result = self.retrieval_service.retrieve(
                 request_id=str(uuid4()),
                 conversation_id=state.get("conversation_id", "unknown"),
@@ -344,6 +349,7 @@ class AssistantNodes:
             assessment = EvidenceAssessment.model_validate(state["evidence_assessment"])
             skill = self.skill_runtime.view(plan.scene.active_skill_scenarios)
             prompt = assemble_prompt(
+                # 这里只接收 evidence gate 放行的 chunks，不能把原始召回候选当作事实来源。
                 list(skill.core_rules),
                 skill.scene_policies,
                 skill.output_policy,
@@ -372,6 +378,7 @@ class AssistantNodes:
         return {"final_response": result.model_dump()}
 
     def validate_output(self, state: ChatState) -> ChatState:
+        # 最终防线独立于模型提示：即使 schema 校验通过，也必须做安全替换和长度收敛。
         plan = SceneAndRetrievalPlan.model_validate(state["scene_and_retrieval_plan"])
         result = validate_result(
             ChatResult.model_validate(state["final_response"]), plan.scene.task_type

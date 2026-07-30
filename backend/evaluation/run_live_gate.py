@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import atexit
 import json
 import math
 import os
@@ -22,6 +23,8 @@ from evaluation.gate_support import (
     publish_outputs,
 )
 from app.knowledge.governance.corpus_version import CURRENT_CORPUS_VERSION
+from app.bootstrap.runtime import AppRuntime
+from app.core.config import Settings
 
 
 DEFAULT_OUTPUT = TRELIS / "live-gate-results.json"
@@ -95,10 +98,11 @@ def main() -> None:
     os.environ["DEMO_MODE"] = "false"
     os.environ["DATABASE_URL"] = args.database_url
     os.environ["CORPUS_VERSION"] = args.corpus_version
-    from app import main as runtime
+    runtime = AppRuntime(Settings.from_env()).start()
+    atexit.register(runtime.close)
 
-    if runtime._readiness_errors:
-        raise RuntimeError(f"production runtime is not ready: {runtime._readiness_errors}")
+    if runtime.readiness_errors:
+        raise RuntimeError(f"production runtime is not ready: {runtime.readiness_errors}")
 
     cases = [
         json.loads(line)

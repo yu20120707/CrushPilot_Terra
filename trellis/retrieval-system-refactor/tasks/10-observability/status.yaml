@@ -1,0 +1,6 @@
+task: 10-observability
+spec_ids: [SPEC-ADR-010, SPEC-VEC-002, SPEC-RERANK-002, SPEC-FAIL-002, SPEC-FAIL-004, SPEC-FAIL-005, SPEC-FAIL-006, SPEC-FAIL-008, SPEC-FAIL-009, SPEC-OBS-001, SPEC-OBS-002, SPEC-TEST-U-010, SPEC-TEST-U-011, SPEC-TEST-002, SPEC-MIG-003, SPEC-DONE-008, SPEC-DONE-009]
+status: completed
+evidence:
+  - backend/app/knowledge/observability/metrics.py
+  - backend/tests/test_observability.py

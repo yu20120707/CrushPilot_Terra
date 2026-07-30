@@ -1,0 +1,16 @@
+{
+  "case_count": 16,
+  "required_topic_coverage": 0.8958333333333334,
+  "task_type_accuracy": 0.8125,
+  "action_direction_accuracy": 0.625,
+  "required_topic_coverage_by_category": {
+    "信息不足": 1.0,
+    "分手与退出": 0.8333333333333333,
+    "多意图问题": 1.0,
+    "延迟回复": 0.8333333333333333,
+    "情绪支持": 1.0,
+    "投入失衡": 0.75,
+    "明确拒绝": 1.0,
+    "边界": 0.75
+  }
+}

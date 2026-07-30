@@ -1,0 +1,13 @@
+task: 12-migration-cutover
+spec_ids: [SPEC-ADR-005, SPEC-FAIL-010, SPEC-MOD-001, SPEC-PUB-001, SPEC-PUB-002, SPEC-PUB-003, SPEC-PUB-004, SPEC-EVAL-003, SPEC-TEST-002, SPEC-TEST-E2E-006, SPEC-TEST-E2E-007, SPEC-MIG-005, SPEC-MIG-006, SPEC-DONE-003, SPEC-DONE-010, SPEC-DONE-012]
+status: in_progress
+evidence:
+  - docs/adr/ADR-013-检索迁移影子评测偏差.md
+  - docs/检索系统迁移说明.md
+  - docs/检索系统回滚说明.md
+  - scripts/detect_legacy_retrieval_paths.py
+remaining:
+  - Architecture owner must approve or reject ADR-013.
+  - Golden 120 release gates must all pass before cutover is completed.
+  - Replay report must include ranking, task/action direction, and new-path stage latency.
+  - Legacy retrieval detector must remain zero.

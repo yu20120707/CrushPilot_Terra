@@ -1,0 +1,8 @@
+{
+  "corpus_version": "2026.08.1",
+  "embedding_model": "BAAI/bge-small-zh-v1.5",
+  "embedding_dimension": 512,
+  "embedding_normalization": "l2",
+  "tokenizer_version": "jieba-0.42",
+  "chunker_version": "heading-semantic-v1"
+}

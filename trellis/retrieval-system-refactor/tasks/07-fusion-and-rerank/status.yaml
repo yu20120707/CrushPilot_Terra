@@ -1,0 +1,7 @@
+task: 07-fusion-and-rerank
+spec_ids: [SPEC-ADR-008, SPEC-ADR-009, SPEC-FUSION-001, SPEC-RERANK-001, SPEC-RERANK-002, SPEC-FAIL-005, SPEC-TEST-U-006, SPEC-TEST-U-011, SPEC-TEST-002, SPEC-TEST-E2E-004, SPEC-MIG-003, SPEC-DONE-006]
+status: completed
+evidence:
+  - backend/app/knowledge/retrieval/fusion.py
+  - backend/app/knowledge/retrieval/reranker.py
+  - backend/tests/test_retrieval_algorithms.py

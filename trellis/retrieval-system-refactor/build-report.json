@@ -1,0 +1,34 @@
+{
+  "corpus_version": "2026.07.6",
+  "embedding_model": "BAAI/bge-small-zh-v1.5",
+  "embedding_dimension": 512,
+  "embedding_normalization": "l2",
+  "tokenizer_version": "jieba-0.42",
+  "chunker_version": "heading-semantic-v1",
+  "document_count": 40,
+  "chunk_count": 380,
+  "missing_metadata": {
+    "knowledge_type": 0,
+    "topics": 0,
+    "applicable_when": 0,
+    "not_applicable_when": 345,
+    "action_labels": 135
+  },
+  "missing_metadata_ratios": {
+    "knowledge_type": 0.0,
+    "topics": 0.0,
+    "applicable_when": 0.0,
+    "not_applicable_when": 0.9078947368421053,
+    "action_labels": 0.35526315789473684
+  },
+  "metadata_suggestion_statuses": {
+    "accepted": 0,
+    "missing": 380,
+    "invalid": 0
+  },
+  "metadata_suggestion_ratios": {
+    "accepted": 0.0,
+    "missing": 1.0,
+    "invalid": 0.0
+  }
+}

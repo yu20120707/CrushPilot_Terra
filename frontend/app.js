@@ -1,4 +1,4 @@
-const api = ["localhost", "127.0.0.1"].includes(location.hostname) && location.port === "5173" ? "http://127.0.0.1:8000" : "";
+const api = ["localhost", "127.0.0.1"].includes(location.hostname) && location.port === "5173" ? "http://127.0.0.1:8001" : "";
 let threadId = crypto.randomUUID();
 let deviceId = localStorage.getItem("crushpilot-device-id");
 if (!deviceId) { deviceId = crypto.randomUUID(); localStorage.setItem("crushpilot-device-id", deviceId); }
@@ -30,7 +30,7 @@ function message(role, content) {
 
 function renderResult(result, draft) {
   draft.replaceChildren();
-  addElement(draft, "span", `CrushPilot · ${result.skill}`, "label");
+  addElement(draft, "span", `CrushPilot · ${result.intent || "场景建议"}`, "label");
   const body = document.createElement("div");
   body.className = "result";
   addElement(body, "strong", result.judgement);
@@ -70,7 +70,6 @@ async function send(text) {
         const data = lines.find(line => line.startsWith("data:"))?.slice(5).trim();
         if (!data) continue;
         const payload = JSON.parse(data);
-        if (name === "token") draft.lastElementChild.textContent = (draft.lastElementChild.textContent === "正在思考…" ? "" : draft.lastElementChild.textContent) + payload.text;
         if (name === "complete") renderResult(payload, draft);
         if (name === "error") throw Error(payload.message);
       }

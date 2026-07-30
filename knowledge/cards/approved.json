@@ -1,0 +1,59 @@
+[
+  {
+    "id": "income-demeaning",
+    "scenario": "收入或经济条件被贬低",
+    "triggers": ["工资", "收入", "经济条件", "赚得少", "没钱", "家庭条件"],
+    "user_goal": "自然回应，并判断双方的价值观是否匹配",
+    "safe_principles": ["不急于自证或攀比", "不反过来贬低对方", "把重点放在相互尊重和现实规划"],
+    "response_constraints": ["不施压", "不操控", "允许结束话题或停止发展关系"],
+    "source_refs": [
+      {"path": "pua-knowledge-sharing/er-guan-yu-nv-ren/bao-fa-li-fu-ren.md"},
+      {"path": "pua-knowledge-sharing/er-guan-yu-nv-ren/nv-ren-de-shuang-biao.md"},
+      {"path": "pua-knowledge-sharing/wu-guan-yu-xiang-qin-nv/nv-ren-bu-ken-fu-chu.md"}
+    ],
+    "source_risk": "mixed",
+    "review_status": "approved"
+  },
+  {
+    "id": "family-background",
+    "scenario": "相亲或关系早期谈家庭背景与条件",
+    "triggers": ["家庭条件", "父母", "房子", "相亲", "背景", "彩礼"],
+    "user_goal": "平等地交换必要信息，同时保留隐私和选择权",
+    "safe_principles": ["信息披露应当自愿且对等", "不把家庭背景当作贬低他人的理由", "尽早澄清双方看重的现实条件"],
+    "response_constraints": ["不逼问隐私", "不贬损家庭", "允许礼貌地结束不匹配的沟通"],
+    "source_refs": [
+      {"path": "pua-knowledge-sharing/wu-guan-yu-xiang-qin-nv/guan-yu-xiang-qin-nv.md"},
+      {"path": "pua-knowledge-sharing/wu-guan-yu-xiang-qin-nv/dian-xing-xiang-qin-nv-an-li.md"}
+    ],
+    "source_risk": "mixed",
+    "review_status": "approved"
+  },
+  {
+    "id": "low-pressure-chat",
+    "scenario": "对方回复慢、冷场或表示疲惫",
+    "triggers": ["冷场", "不回", "回复慢", "累", "疲惫", "加班", "忙"],
+    "user_goal": "保持自然联系，不给对方造成压力",
+    "safe_principles": ["先回应当下状态而非追问原因", "一次简短表达后留出空间", "把没有回复视为需要等待而非需要加码"],
+    "response_constraints": ["不连环追问", "不制造愧疚", "不要求即时回复"],
+    "source_refs": [
+      {"path": "pua-knowledge-sharing/er-liao-tian-pian/liao-tian-de-ju-ti-zen-mo-zuo.md"},
+      {"path": "pua-knowledge-sharing/er-liao-tian-pian/liao-tian-zhi-dao-si-xiang.md"}
+    ],
+    "source_risk": "mixed",
+    "review_status": "approved"
+  },
+  {
+    "id": "respectful-invitation",
+    "scenario": "发起约会或提出见面",
+    "triggers": ["约会", "邀约", "见面", "周末", "出来", "吃饭"],
+    "user_goal": "发出具体、低压力且可拒绝的邀请",
+    "safe_principles": ["邀请要明确时间和活动", "接受拒绝或改期", "把对方舒适感放在结果之前"],
+    "response_constraints": ["不诱导喝酒或性关系", "不纠缠", "不以人情施压"],
+    "source_refs": [
+      {"path": "pua-knowledge-sharing/san-yue-hui-pian/chu-ci-yue-hui-can-kao-shou-ce.md"},
+      {"path": "pua-knowledge-sharing/er-liao-tian-pian/liao-tian-hua-shu-can-kao-shou-ce/zou-xin-jiao-liu.md"}
+    ],
+    "source_risk": "mixed",
+    "review_status": "approved"
+  }
+]

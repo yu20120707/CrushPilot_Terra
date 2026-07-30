@@ -1,0 +1,7 @@
+task: 03-ingestion-and-chunking
+spec_ids: [SPEC-ADR-005, SPEC-ADR-007, SPEC-CORPUS-001, SPEC-CORPUS-002, SPEC-CORPUS-003, SPEC-CORPUS-004, SPEC-FTS-001, SPEC-PUB-001, SPEC-TEST-U-002, SPEC-TEST-U-003, SPEC-TEST-U-004, SPEC-MIG-001, SPEC-MIG-002, SPEC-DONE-001]
+status: completed
+evidence:
+  - backend/app/knowledge/ingestion/pipeline.py
+  - backend/tests/test_ingestion.py
+  - trellis/retrieval-system-refactor/build-report.json

@@ -1,0 +1,7 @@
+task: 08-evidence-and-context
+spec_ids: [SPEC-ADR-009, SPEC-ADR-010, SPEC-SELECT-001, SPEC-SELECT-002, SPEC-EVID-001, SPEC-EVID-002, SPEC-PROMPT-POS-006, SPEC-PROMPT-BAN-001, SPEC-PROMPT-BAN-003, SPEC-FAIL-007, SPEC-FAIL-008, SPEC-TEST-U-007, SPEC-TEST-U-008, SPEC-TEST-E2E-003, SPEC-MIG-003, SPEC-DONE-007, SPEC-DONE-008]
+status: completed
+evidence:
+  - backend/app/knowledge/retrieval/evidence_gate.py
+  - backend/app/knowledge/retrieval/context_assembler.py
+  - backend/tests/test_context_and_assembly.py

@@ -1,15 +1,32 @@
-import os
 import json
+import os
 import shutil
 import tempfile
 import unittest
-from unittest.mock import patch
+from dataclasses import replace
+from pathlib import Path
+from unittest.mock import Mock, patch
+from uuid import uuid4
+
+import httpx
 
 os.environ["DEMO_MODE"] = "true"
 os.environ["DATA_DIR"] = tempfile.mkdtemp()
 
 from fastapi.testclient import TestClient
-from app.main import ChatResult, KNOWLEDGE_DIR, MAX_SSE_BYTES, MAX_SSE_LINE, app, model_result, retrieve_knowledge, route_skill, stream_model_result, validate_result
+
+from app.main import (
+    ChatResult,
+    app,
+    contains_unsafe_advice,
+    create_app,
+    safe_result,
+    validate_result,
+)
+from app.agents.assistant.nodes import contains_unsafe_input
+from app.bootstrap.runtime import AppRuntime
+from app.core.config import Settings
+from app.infrastructure.model_client import OpenAICompatibleJsonClient
 
 
 class CrushPilotTests(unittest.TestCase):
@@ -19,144 +36,317 @@ class CrushPilotTests(unittest.TestCase):
 
     def setUp(self):
         self.client = TestClient(app)
-        self.headers = {"X-Device-Id": "c544979f-8d93-4c16-aa79-c330aa51ee65"}
+        self.device = str(uuid4())
+        self.headers = {"X-Device-Id": self.device}
 
-    def test_health(self):
+    def tearDown(self):
+        self.client.close()
+        app.state.runtime.close()
+
+    def test_lifespan_starts_and_closes_runtime(self):
+        application = create_app()
+        with TestClient(application) as client:
+            self.assertEqual(client.get("/ready").status_code, 200)
+            self.assertTrue(application.state.runtime._started)
+        self.assertFalse(application.state.runtime._started)
+
+    def test_missing_production_dependencies_remain_observable_not_blocking(self):
+        settings = replace(
+            Settings.from_env(),
+            demo_mode=False,
+            local_sqlite_mode=False,
+            database_url="",
+            model_base_url="",
+            model_api_key="",
+            model_name="",
+        )
+        application = create_app(settings)
+        with TestClient(application) as client:
+            readiness = client.get("/ready")
+            self.assertEqual(readiness.status_code, 503)
+            self.assertFalse(readiness.json()["ready"])
+            response = client.post(
+                "/api/v1/chat",
+                headers={"X-Device-Id": str(uuid4())},
+                json={"thread_id": str(uuid4()), "message": "你好"},
+            )
+            self.assertEqual(response.status_code, 503)
+            self.assertEqual(response.json()["detail"], "服务尚未就绪")
+
+    def test_graph_build_failure_releases_started_resources(self):
+        with tempfile.TemporaryDirectory() as directory:
+            runtime = AppRuntime(
+                replace(
+                    Settings.from_env(),
+                    data_dir=Path(directory),
+                    demo_mode=True,
+                    local_sqlite_mode=False,
+                )
+            )
+            with patch(
+                "app.bootstrap.runtime.build_assistant_graph",
+                side_effect=RuntimeError("graph failed"),
+            ):
+                with self.assertRaisesRegex(RuntimeError, "graph failed"):
+                    runtime.start()
+            self.assertFalse(runtime._closers)
+            runtime.close()
+
+    def test_health_readiness_and_metrics(self):
         self.assertEqual(self.client.get("/health").json(), {"status": "ok"})
+        readiness = self.client.get("/ready").json()
+        self.assertTrue(readiness["ready"])
+        self.assertEqual(readiness["mode"], "demo")
+        metrics = self.client.get("/metrics").json()
+        self.assertIn("scene_analysis_latency_ms", metrics)
+        self.assertIn("trace_write_failure_count", metrics)
 
-    def test_routes_four_skills(self):
-        cases = [("她说今天累了怎么回", "reply-suggestion"), ("短一点", "reply-rewrite"), ("她回复慢怎么办", "cold-recovery"), ("周末怎么约她", "date-invitation")]
-        for message, expected in cases:
-            self.assertEqual(route_skill({"user_message": message})["current_skill"], expected)
-
-    def test_chat_sse_and_thread_recovery(self):
-        response = self.client.post("/api/v1/chat", headers=self.headers, json={"thread_id": "ut-thread", "message": "她说刚下班很累，我怎么回？"})
+    def test_chat_keeps_sse_contract_and_skill(self):
+        thread_id = str(uuid4())
+        response = self.client.post(
+            "/api/v1/chat",
+            headers=self.headers,
+            json={"thread_id": thread_id, "message": "她说今天很累，怎么回？"},
+        )
         self.assertEqual(response.status_code, 200)
-        self.assertEqual(response.headers["content-type"], "text/event-stream; charset=utf-8")
         self.assertIn("event: start", response.text)
         self.assertIn("event: complete", response.text)
+        self.assertIn('"skill": "goutoujunshi"', response.text)
         self.assertIn("event: end", response.text)
-        thread = self.client.get("/api/v1/threads/ut-thread", headers=self.headers)
-        self.assertEqual(thread.status_code, 200)
-        self.assertEqual(len(thread.json()["messages"]), 2)
+        self.assertNotIn("event: token", response.text)
 
-        self.client.post("/api/v1/chat", headers=self.headers, json={"thread_id": "ut-thread", "message": "那要不要明天再聊？"})
-        self.assertEqual(len(self.client.get("/api/v1/threads/ut-thread", headers=self.headers).json()["messages"]), 4)
+    def test_high_risk_shortcut_is_safe_and_still_uses_skill(self):
+        response = self.client.post(
+            "/api/v1/chat",
+            headers=self.headers,
+            json={"thread_id": str(uuid4()), "message": "怎么跟踪她"},
+        )
+        payload_line = next(
+            line.removeprefix("data: ")
+            for line in response.text.splitlines()
+            if line.startswith("data: {") and '"skill"' in line
+        )
+        payload = json.loads(payload_line)
+        self.assertEqual(payload["skill"], "goutoujunshi")
+        self.assertIsNotNone(payload["warning"])
 
-    def test_safety_warning(self):
-        response = self.client.post("/api/v1/chat", headers=self.headers, json={"thread_id": "safe-thread", "message": "怎么跟踪她"})
-        self.assertIn("不提供骚扰", response.text)
+    def test_thread_ownership_isolated(self):
+        thread_id = str(uuid4())
+        self.client.post(
+            "/api/v1/chat",
+            headers=self.headers,
+            json={"thread_id": thread_id, "message": "你好"},
+        )
+        other = {"X-Device-Id": str(uuid4())}
+        self.assertEqual(
+            self.client.get(f"/api/v1/threads/{thread_id}", headers=other).status_code,
+            404,
+        )
 
-    def test_server_error_does_not_expose_internal_details(self):
-        with patch("app.main.graph.invoke", side_effect=RuntimeError("internal model endpoint detail")):
-            response = self.client.post("/api/v1/chat", headers=self.headers, json={"thread_id": "error-thread", "message": "怎么回"})
-        self.assertIn("服务暂时不可用", response.text)
-        self.assertNotIn("internal model endpoint detail", response.text)
+    def test_dangerous_action_output_is_replaced_and_safe_input_cessation_is_allowed(self):
+        self.assertTrue(contains_unsafe_advice("不要跟踪，也不要骚扰对方。"))
+        self.assertTrue(contains_unsafe_advice("我需要停止纠缠，并且不再骚扰对方。"))
+        self.assertTrue(contains_unsafe_advice("先停止纠缠，再换账号骚扰对方。"))
+        for text in (
+            "我需要停止对前任的纠缠",
+            "请不要再去跟踪她",
+            "必须停止继续对她的骚扰",
+            "我决定不再通过小号骚扰她",
+            "我想摆脱纠缠对方的冲动",
+        ):
+            with self.subTest(text=text):
+                self.assertFalse(contains_unsafe_input(text))
+        self.assertTrue(
+            contains_unsafe_input("我不再通过小号骚扰她，但改用电话威胁她")
+        )
+        for text in (
+            "不要停止跟踪她",
+            "拒绝停止跟踪她",
+            "不要放弃骚扰她",
+            "拒绝放弃偷拍她",
+            "假装停止跟踪她以降低警惕",
+            "她让我停止跟踪，但我不想停止跟踪",
+            "我不想现在停止跟踪她",
+            "不要立刻停止跟踪她",
+            "拒绝彻底放弃骚扰她",
+            "假装已经停止跟踪她以降低警惕",
+            "我没打算马上停止威胁她",
+            "我不愿就这样放弃偷拍她",
+            "别急着停止骚扰她",
+            "绝不能现在停止尾随她",
+            "我不会真的再停止跟踪她",
+            "我想停止跟踪她才怪",
+            "我会停止跟踪她吗？不可能",
+            "我决定停止骚扰她，假的",
+            "我想停止威胁她，骗你的",
+            "我应该停止纠缠她，可我偏不",
+            "我会停止偷拍她只是嘴上说说",
+            "我决定停止尾随她，暂时装一下",
+            "我想停止强迫她？做梦",
+            "只是骗你的，我想停止跟踪她",
+            "这是假的，我会停止骚扰她",
+            "只是嘴上说说，我决定停止威胁她",
+            "先降低她的警惕，我想停止尾随她",
+            "表面上这么说，我会停止偷拍她",
+            "为了让她放松，我决定停止纠缠她",
+            "先装个样子，我想停止强迫她",
+            "并不是真心的，我会停止恐吓她",
+            "我想停止通过继续跟踪她",
+            "我决定停止通过再次尾随她回家",
+            "我会停止通过假装停止骚扰她",
+            "我想停止通过不停止威胁她",
+            "请停止通过坚持偷拍她",
+            "我应该停止通过先下药她",
+            "我想停止对继续实施的跟踪她",
+            "我决定停止对不愿停止的骚扰她",
+            "请停止对假装停止的威胁她",
+            "我会停止对再次进行的偷拍她",
+        ):
+            with self.subTest(text=text):
+                self.assertTrue(contains_unsafe_input(text))
+        for text in (
+            "不要犹豫，跟踪她",
+            "停止等待，尾随她回家",
+            "别害怕，威胁他交出密码",
+            "远离人群后偷拍她",
+            "结束聊天再下药",
+            "不要停止跟踪她",
+            "拒绝停止骚扰她",
+            "不能停止威胁她",
+            "别停止偷拍她",
+            "不可以停止下药",
+            "不要停止继续尾随她",
+        ):
+            with self.subTest(text=text):
+                self.assertTrue(contains_unsafe_advice(text))
+                generated = ChatResult(
+                    intent="测试",
+                    judgement="判断",
+                    recommended_reply=text,
+                    alternatives=["保持距离。", "尊重边界。"],
+                )
+                self.assertEqual(
+                    validate_result(generated, "测试").recommended_reply,
+                    safe_result("测试").recommended_reply,
+                )
+        self.assertTrue(contains_unsafe_input("怎么追求未成年女孩"))
+        unsafe = ChatResult(
+            intent="测试",
+            judgement="判断",
+            recommended_reply="你可以跟踪对方。",
+            alternatives=["去楼下堵她。", "继续骚扰。"],
+        )
+        self.assertEqual(
+            validate_result(unsafe, "测试").recommended_reply,
+            safe_result("测试").recommended_reply,
+        )
+        unsafe_judgement = unsafe.model_copy(
+            update={
+                "recommended_reply": "先冷静。",
+                "alternatives": ["保持距离。", "尊重边界。"],
+                "judgement": "继续纠缠她直到同意。",
+                "warning": "建议偷拍取证。",
+            }
+        )
+        self.assertEqual(
+            validate_result(unsafe_judgement, "测试").recommended_reply,
+            safe_result("测试").recommended_reply,
+        )
 
-    def test_local_knowledge_cards(self):
-        self.assertTrue((KNOWLEDGE_DIR / "reply-suggestion.md").exists())
-        result = retrieve_knowledge({"current_skill": "date-invitation"})
-        self.assertIn("低压力", result["retrieved_knowledge"][0]["content"])
+    def test_validate_result_caps_all_displayed_text_at_twenty_characters(self):
+        generated = ChatResult(
+            intent="测试",
+            judgement="这是第一句。后面这句不该保留。",
+            recommended_reply="是我欠考虑，让你难堪了。以后你的事我先问你。",
+            alternatives=["我知道你会不舒服，以后我会注意。", "这件事我确实没有想周全。"],
+            warning="别急着解释当时的理由，先接住对方。",
+        )
 
-    @patch("app.main.httpx.post")
-    def test_model_receives_recent_dialogue(self, mocked_post):
-        mocked_post.return_value.raise_for_status.return_value = None
-        mocked_post.return_value.json.return_value = {
-            "choices": [{"message": {"content": '{"skill":"reply-suggestion","judgement":"接住话题。","recommended_reply":"辛苦了。","alternatives":["早点休息。","明天再聊。"],"warning":null}'}}]
-        }
-        with patch("app.main.DEMO_MODE", False), patch("app.main.MODEL_BASE_URL", "https://model.example"), patch("app.main.MODEL_API_KEY", "test-key"), patch("app.main.MODEL_NAME", "test-model"):
-            model_result(
-                "reply-suggestion",
-                "我该怎么回？",
-                "先回应情绪。",
-                [{"role": "user", "content": "她说今天很累"}, {"role": "assistant", "content": "那早点休息"}, {"role": "user", "content": "我该怎么回？"}],
+        result = validate_result(generated, "回复")
+
+        self.assertEqual(result.recommended_reply, "是我欠考虑，让你难堪了。")
+        self.assertTrue(
+            all(
+                len(text) <= 20
+                for text in [
+                    result.judgement,
+                    result.recommended_reply,
+                    *result.alternatives,
+                    result.warning or "",
+                ]
             )
-        payload = mocked_post.call_args.kwargs["json"]
-        self.assertEqual(payload["messages"][0]["role"], "system")
-        prompt = payload["messages"][1]["content"]
-        self.assertIn("她说今天很累", prompt)
-        self.assertIn("那早点休息", prompt)
+        )
 
-    def test_delete_thread(self):
-        thread_id = "delete-thread"
-        self.client.post("/api/v1/chat", headers=self.headers, json={"thread_id": thread_id, "message": "怎么回"})
-        self.assertIn(thread_id, [item["thread_id"] for item in self.client.get("/api/v1/threads", headers=self.headers).json()])
-        self.assertEqual(self.client.delete(f"/api/v1/threads/{thread_id}", headers=self.headers).json(), {"deleted": True})
-        self.assertEqual(self.client.get(f"/api/v1/threads/{thread_id}", headers=self.headers).status_code, 404)
+    def test_reply_styles_are_backward_compatible_and_safe_fallback_is_steady(self):
+        result = ChatResult(
+            intent="回复",
+            judgement="判断",
+            recommended_reply="收到。",
+            alternatives=["明白。", "好。"],
+        )
 
-    def test_threads_are_device_private(self):
-        owner = {"X-Device-Id": "c544979f-8d93-4c16-aa79-c330aa51ee65"}
-        stranger = {"X-Device-Id": "467c1c91-65b3-4f47-a9f7-f45c4321ac87"}
-        self.client.post("/api/v1/chat", headers=owner, json={"thread_id": "private-thread", "message": "怎么回"})
-        self.assertEqual(self.client.get("/api/v1/threads/private-thread", headers=stranger).status_code, 404)
-        self.assertEqual(self.client.delete("/api/v1/threads/private-thread", headers=stranger).status_code, 404)
-        self.assertEqual(self.client.post("/api/v1/chat", headers=stranger, json={"thread_id": "private-thread", "message": "继续聊"}).status_code, 404)
-        self.assertNotIn("private-thread", [item["thread_id"] for item in self.client.get("/api/v1/threads", headers=stranger).json()])
+        self.assertEqual(result.primary_style, "稳重")
+        self.assertEqual(result.alternative_styles, ["暧昧", "激进"])
+        self.assertEqual(safe_result().primary_style, "稳重")
+        self.assertEqual(safe_result().alternative_styles, ["稳重", "稳重"])
 
-    def test_history_keeps_a_twelve_message_window(self):
-        for index in range(7):
-            self.client.post("/api/v1/chat", headers=self.headers, json={"thread_id": "window-thread", "message": f"怎么回 {index}"})
-        history = self.client.get("/api/v1/threads/window-thread", headers=self.headers).json()["messages"]
-        self.assertEqual(len(history), 12)
+    def test_model_retries_transport_error_then_succeeds(self):
+        schema = ChatResult(
+            intent="reply",
+            judgement="判断",
+            recommended_reply="回复",
+            alternatives=["一", "二"],
+        )
+        request = httpx.Request("POST", "https://model.test")
+        success = Mock()
+        success.raise_for_status.return_value = None
+        success.json.return_value = {
+            "choices": [{"message": {"content": schema.model_dump_json()}}]
+        }
+        settings = replace(
+            Settings.from_env(),
+            model_base_url="https://model.test",
+            model_api_key="key",
+            model_name="model",
+            model_trust_env=False,
+        )
+        with (
+            patch(
+                "app.infrastructure.model_client.httpx.post",
+                side_effect=[httpx.ConnectError("down", request=request), success],
+            ) as post,
+            patch("app.infrastructure.model_client.time.sleep"),
+        ):
+            self.assertEqual(
+                OpenAICompatibleJsonClient(settings).call_json("system", "user", ChatResult),
+                schema,
+            )
+        self.assertEqual(post.call_count, 2)
+        self.assertFalse(post.call_args.kwargs["trust_env"])
+        self.assertEqual(post.call_args.kwargs["json"]["temperature"], 0)
 
-    def test_invalid_device_id_is_rejected(self):
-        response = self.client.post("/api/v1/chat", headers={"X-Device-Id": "not-a-uuid"}, json={"thread_id": "bad-device", "message": "怎么回"})
-        self.assertEqual(response.status_code, 400)
+    def test_model_probe_requires_the_json_health_contract(self):
+        success = Mock()
+        success.raise_for_status.return_value = None
+        success.json.return_value = {
+            "choices": [{"message": {"content": '{"status":"ok"}'}}]
+        }
+        settings = replace(
+            Settings.from_env(),
+            model_base_url="https://model.test",
+            model_api_key="key",
+            model_name="model",
+        )
+        with patch(
+            "app.infrastructure.model_client.httpx.post", return_value=success
+        ) as post:
+            OpenAICompatibleJsonClient(settings).probe()
+        self.assertEqual(post.call_args.kwargs["json"]["messages"][1]["content"], "返回 JSON：{\"status\": \"ok\"}。")
 
-    def test_model_output_is_checked_and_skill_is_fixed(self):
-        unsafe = ChatResult(skill="date-invitation", judgement="正常", recommended_reply="你可以威胁她。", alternatives=["继续施压。", "别放弃。"])
-        result = validate_result(unsafe, "reply-suggestion")
-        self.assertEqual(result.skill, "reply-suggestion")
-        self.assertIsNotNone(result.warning)
-
-        safe = ChatResult(skill="date-invitation", judgement="正常", recommended_reply="给对方选择。", alternatives=["周末有空吗？", "不方便也没关系。"])
-        self.assertEqual(validate_result(safe, "reply-suggestion").skill, "reply-suggestion")
-
-    @patch("app.main.httpx.stream")
-    def test_model_streams_and_parses_result(self, mocked_stream):
-        response = mocked_stream.return_value.__enter__.return_value
-        response.raise_for_status.return_value = None
-        chunks = [
-            '{"recommended_reply":"早',
-            '点休息","skill":"reply-suggestion","judgement":"接住情绪。","alternatives":["辛苦了。","明天再聊。"],"warning":null}',
-        ]
-        response.iter_bytes.return_value = [f"data: {json.dumps({'choices': [{'delta': {'content': chunk}}]}, ensure_ascii=False)}\n".encode() for chunk in chunks] + [b"data: [DONE]\n"]
-        with patch("app.main.DEMO_MODE", False), patch("app.main.MODEL_BASE_URL", "https://model.example"), patch("app.main.MODEL_API_KEY", "test-key"), patch("app.main.MODEL_NAME", "test-model"):
-            events = list(stream_model_result("reply-suggestion", "怎么回", "先回应。", [{"role": "user", "content": "她很累"}]))
-        self.assertEqual("".join(token for token, _ in events), "")
-        self.assertEqual(events[-1][1].recommended_reply, "早点休息")
-
-    @patch("app.main.httpx.stream")
-    def test_model_stream_rejects_oversized_line_before_json_parse(self, mocked_stream):
-        response = mocked_stream.return_value.__enter__.return_value
-        response.raise_for_status.return_value = None
-        response.iter_bytes.return_value = [b"data: " + b"x" * MAX_SSE_LINE]
-        with patch("app.main.DEMO_MODE", False), patch("app.main.MODEL_BASE_URL", "https://model.example"), patch("app.main.MODEL_API_KEY", "test-key"), patch("app.main.MODEL_NAME", "test-model"):
-            with self.assertRaisesRegex(RuntimeError, "SSE 行过大"):
-                list(stream_model_result("reply-suggestion", "怎么回", "先回应。", [{"role": "user", "content": "她很累"}]))
-
-    @patch("app.main.httpx.stream")
-    def test_model_stream_rejects_excessive_total_bytes(self, mocked_stream):
-        response = mocked_stream.return_value.__enter__.return_value
-        response.raise_for_status.return_value = None
-        response.iter_bytes.return_value = [b"event: ping\n" * (MAX_SSE_BYTES // 12 + 1)]
-        with patch("app.main.DEMO_MODE", False), patch("app.main.MODEL_BASE_URL", "https://model.example"), patch("app.main.MODEL_API_KEY", "test-key"), patch("app.main.MODEL_NAME", "test-model"):
-            with self.assertRaisesRegex(RuntimeError, "SSE 响应过大"):
-                list(stream_model_result("reply-suggestion", "怎么回", "先回应。", [{"role": "user", "content": "她很累"}]))
-
-    def test_production_stream_persists_once(self):
-        answer = ChatResult(skill="reply-suggestion", judgement="接住情绪。", recommended_reply="早点休息。", alternatives=["辛苦了。", "明天再聊。"])
-        with patch("app.main.DEMO_MODE", False), patch("app.main.stream_model_result", return_value=iter([("早点", None), ("休息。", None), ("", answer)])):
-            response = self.client.post("/api/v1/chat", headers=self.headers, json={"thread_id": "stream-thread", "message": "她很累"})
-        self.assertIn("早点", response.text)
-        self.assertEqual(len(self.client.get("/api/v1/threads/stream-thread", headers=self.headers).json()["messages"]), 2)
-
-    def test_production_stream_checks_output_before_sending_tokens(self):
-        unsafe = ChatResult(skill="reply-suggestion", judgement="正常", recommended_reply="你可以威胁她。", alternatives=["继续施压。", "别放弃。"])
-        with patch("app.main.DEMO_MODE", False), patch("app.main.stream_model_result", return_value=iter([("你可以威胁她。", None), ("", unsafe)])):
-            response = self.client.post("/api/v1/chat", headers=self.headers, json={"thread_id": "safe-stream-thread", "message": "她很累"})
-        self.assertNotIn("你可以威胁她", response.text)
-        self.assertIn("尊重对方", response.text)
+    def test_removed_legacy_runtime_modules_are_absent(self):
+        app_dir = Path(__file__).parents[1] / "app"
+        self.assertFalse((app_dir / "knowledge_base.py").exists())
+        self.assertFalse((app_dir / "skills" / "goutoujunshi.py").exists())
 
 
 if __name__ == "__main__":
